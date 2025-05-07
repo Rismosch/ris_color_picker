@@ -1,10 +1,178 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>ris_color_picker</title>
+    <meta charset="UTF-8">
+    <title>ris_color_picker</title>
+    <style>
+        :root{
+            --pico-8-black:         #000000;
+            --pico-8-blue:          #1d2b53;
+            --pico-8-purple:        #7e2553;
+            --pico-8-green:         #008751;
+            --pico-8-brown:         #ab5236;
+            --pico-8-dark-grey:     #5f574f;
+            --pico-8-light-grey:    #c2c3c7;
+            --pico-8-white:         #fff1e8;
+            --pico-8-red:           #ff004d;
+            --pico-8-orange:        #ffa300;
+            --pico-8-yellow:        #ffec27;
+            --pico-8-lime:          #00e436;
+            --pico-8-cyan:          #29adff;
+            --pico-8-washed-grey:   #83769c;
+            --pico-8-pink:          #ff77a8;
+            --pico-8-flesh:         #ffccaa;
+        }
+
+        .canvas {
+            border: 1px solid var(--pico-8-dark-grey);
+        }
+
+        .centered {
+            display: flex;
+            align-items: center;
+            margin: 5px;
+        }
+
+        .label {
+            width: 10px;
+            margin: 0px 0px 0px 5px;
+            user-select: none;
+            -webkit-user-select: none; /* Safari */
+            -moz-user-select: none;    /* Firefox */
+            -ms-user-select: none;     /* Internet Explorer/Edge */
+        }
+
+        .slider {
+            margin: 0px 10px 0px 10px;
+        }
+
+        .text_field {
+            width: 75px;
+        }
+
+    </style>
 </head>
-<body>
-  <p>Hello, World!</p>
+<body style="background: var(--pico-8-white); font-family: Arial, sans-serif;">
+    <div id="javascript_content" style="display: none">
+        <div style="display: inline-block" >
+            <canvas id="canvas_xy" class="canvas" width="200" height="200"></canvas>
+            <canvas id="canvas_z" class="canvas" width="20" height="200"></canvas>
+        </div>
+
+        <div style="display: inline-block" class>
+            <div class="centered">
+                <input type="radio" id="radio_r" name="z_coord">
+                <span class="label" title="Red">R</span>
+                <input type="range" id="slider_r" class="slider" min="0" max="255" value="126" step="1">
+                <input type="number" id="number_field_r" class="text_field" min="0" max="255" value="255">
+            </div>
+            <div class="centered">
+                <input type="radio" id="radio_g" name="z_coord">
+                <span class="label" title="Green">G</span>
+                <input type="range" id="slider_g" class="slider" min="0" max="255" value="126" step="1">
+                <input type="number" id="number_field_g" class="text_field" min="0" max="255" value="0">
+            </div>
+            <div class="centered">
+                <input type="radio" id="radio_b" name="z_coord">
+                <span class="label" title="Blue">B</span>
+                <input type="range" id="slider_b" class="slider" min="0" max="255" value="126" step="1">
+                <input type="number" id="number_field_b" class="text_field" min="0" max="255" value="0">
+            </div>
+            <div class="centered">
+                <input type="radio" id="radio_l" name="z_coord">
+                <span class="label" title="OkLab Luminocity">L</span>
+                <input type="range" id="slider_l" class="slider" min="0" max="255" value="126" step="1">
+                <input type="number" id="number_field_l" class="text_field" min="0" max="255" value="0">
+            </div>
+            <div class="centered">
+                <input type="radio" id="radio_c" name="z_coord">
+                <span class="label" title="OkLab Chroma">C</span>
+                <input type="range" id="slider_c" class="slider" min="0" max="255" value="126" step="1">
+                <input type="number" id="number_field_c" class="text_field" min="0" max="255" value="0">
+            </div>
+            <div class="centered">
+                <input type="radio" id="radio_h" name="z_coord" checked="checked">
+                <span class="label" title="OkLab Hue">H</span>
+                <input type="range" id="slider_h" class="slider" min="0" max="255" value="126" step="1">
+                <input type="number" id="number_field_h" class="text_field" min="0" max="255" value="0">
+            </div>
+            <div class="centered">
+                <span class="label" style="margin-left: 27px; width: 190px;">Hex Code</span>
+                <input type="text" id="hex_field" class="text_field" value="ff0000">
+            </div>
+        </div>
+
+    </div>
+    <noscript>
+        <p>You need to enable JavaScript for this page to work &#9757;&#129299;</p>
+    </noscript>
+    <script>
+        document.getElementById("javascript_content").style.display = "inline";
+
+        const canvas_xy = ris_canvas = document.getElementById("canvas_xy");
+        const canvas_z = ris_canvas = document.getElementById("canvas_z");
+        const ctx_xy = canvas_xy.getContext('2d');
+        const ctx_z = canvas_z.getContext('2d');
+
+        ctx_xy.fillStyle = 'red';
+        ctx_xy.fillRect(0, 0, 200, 200);
+
+        update_canvas();
+
+        function update_canvas() {
+            update_canvas_xy();
+            update_canvas_z();
+        }
+
+        function update_canvas_xy() {
+            const width = canvas_xy.width;
+            const height = canvas_xy.height;
+
+            const imageData = ctx_xy.createImageData(width, height);
+            const data = imageData.data;
+
+            for (let y = 0; y <= height; ++y) {
+                for (let x = 0; x < width; ++x) {
+                    const inverted_y = height - y;
+                    const i = (inverted_y * width + x) * 4; // each pixel has 4 values: r, g, b, a
+
+                    const normalized_x = x / width;
+                    const normalized_y = y / height;
+
+                    data[i + 0] = 255 * normalized_x;
+                    data[i + 1] = 255 * normalized_y;
+                    data[i + 2] = 0;
+                    data[i + 3] = 255;
+                }
+            }
+
+            ctx_xy.putImageData(imageData, 0, 0);
+        }
+
+        function update_canvas_z() {
+            const width = canvas_z.width;
+            const height = canvas_z.height;
+
+            const imageData = ctx_z.createImageData(width, height);
+            const data = imageData.data;
+
+            for (let y = 0; y <= height; ++y) {
+                for (let x = 0; x < width; ++x) {
+                    const inverted_y = height - y;
+                    const i = (inverted_y * width + x) * 4; // each pixel has 4 values: r, g, b, a
+
+                    const normalized_y = y / height;
+
+                    data[i + 0] = 0;
+                    data[i + 1] = 0;
+                    data[i + 2] = 255 * normalized_y;
+                    data[i + 3] = 255;
+                }
+            }
+
+            ctx_z.putImageData(imageData, 0, 0);
+
+        }
+    </script>
 </body>
 </html>
