@@ -97,18 +97,27 @@
                 <input type="number" id="number_field_h" class="text_field" min="0" max="255" value="0">
             </div>
             <div class="centered">
-                <span class="label" style="margin-left: 27px; width: 190px;">Hex Code</span>
+                <span class="label">Hex Code</span>
                 <input type="text" id="hex_field" class="text_field" value="ff0000">
             </div>
         </div>
+
+        <button onclick="clear_cookie()">Reset</Button>
 
     </div>
     <noscript>
         <p>You need to enable JavaScript for this page to work &#9757;&#129299;</p>
     </noscript>
     <script>
+        // enable color picker
         document.getElementById("javascript_content").style.display = "inline";
 
+        // read cookie
+        const cookie_name = "ris_color_picker_cookie";
+        let cookie;
+        read_cookie();
+
+        // initialize canvas
         const canvas_xy = ris_canvas = document.getElementById("canvas_xy");
         const canvas_z = ris_canvas = document.getElementById("canvas_z");
         const ctx_xy = canvas_xy.getContext('2d');
@@ -119,6 +128,7 @@
 
         update_canvas();
 
+        // canvas functions
         function update_canvas() {
             update_canvas_xy();
             update_canvas_z();
@@ -172,6 +182,57 @@
 
             ctx_z.putImageData(imageData, 0, 0);
 
+        }
+
+        // cookie functions
+        function read_cookie() {
+            let cookie_exists = false;
+            const cookies = document.cookie.split("; ");
+            for (let c of cookies) {
+                const [key, value] = c.split("=");
+                if (key === cookie_name) {
+                    try {
+                        console.log("cookie exists! parsing...")
+                        cookie = JSON.parse(value);
+                        cookie_exists = true;
+                    } catch (e) {
+                        console.log(`failed to parse cookie: ${e}`)
+                    }
+
+                    break;
+                }
+            }
+
+            if (!cookie_exists) {
+                console.log("failed to find valid cookie. creating a new one...")
+
+                cookie = {
+                    my_number: 42,
+                }
+            }
+
+            const cookie_string = JSON.stringify(cookie);
+            console.log(`loaded cookie: ${cookie_string}`);
+        }
+
+        function save_cookie() {
+            // get expiration date 2 weeks from now
+            const date = new Date();
+            date.setDate(date.getDate() + 7);
+            const expiration_date = date.toUTCString();
+
+            console.log(cookie);
+
+            const cookie_data = JSON.stringify(cookie);
+
+            console.log("setting cookie...");
+            document.cookie = `${cookie_name}=${cookie_data}; path=/; expires=${expiration_date}`
+            console.log("set cookie: " + document.cookie);
+        }
+
+        function clear_cookie() {
+            document.cookie = `${cookie_name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+            console.log("cleared cookie");
         }
     </script>
 </body>
