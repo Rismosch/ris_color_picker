@@ -54,54 +54,89 @@
 </head>
 <body style="background: var(--pico-8-white); font-family: Arial, sans-serif;">
     <div id="javascript_content" style="display: none">
-        <div style="display: inline-block" >
-            <canvas id="canvas_xy" class="canvas" width="200" height="200"></canvas>
-            <canvas id="canvas_z" class="canvas" width="20" height="200"></canvas>
-        </div>
+        <!--canvas-->
+        <table style="display: inline-block">
+            <tr>
+                <td><canvas id="canvas_xy" class="canvas" width="256" height="256"></canvas></td>
+                <td><canvas id="canvas_z" class="canvas" width="20" height="256"></canvas></td>
+            </tr>
+        </table>
 
-        <div style="display: inline-block" class>
-            <div class="centered">
-                <input type="radio" id="radio_r" name="z_coord">
-                <span class="label" title="Red">R</span>
-                <input type="range" id="slider_r" class="slider" min="0" max="255" value="126" step="1">
-                <input type="number" id="number_field_r" class="text_field" min="0" max="255" value="255">
-            </div>
-            <div class="centered">
-                <input type="radio" id="radio_g" name="z_coord">
-                <span class="label" title="Green">G</span>
-                <input type="range" id="slider_g" class="slider" min="0" max="255" value="126" step="1">
-                <input type="number" id="number_field_g" class="text_field" min="0" max="255" value="0">
-            </div>
-            <div class="centered">
-                <input type="radio" id="radio_b" name="z_coord">
-                <span class="label" title="Blue">B</span>
-                <input type="range" id="slider_b" class="slider" min="0" max="255" value="126" step="1">
-                <input type="number" id="number_field_b" class="text_field" min="0" max="255" value="0">
-            </div>
-            <div class="centered">
-                <input type="radio" id="radio_l" name="z_coord">
-                <span class="label" title="OkLab Luminocity">L</span>
-                <input type="range" id="slider_l" class="slider" min="0" max="255" value="126" step="1">
-                <input type="number" id="number_field_l" class="text_field" min="0" max="255" value="0">
-            </div>
-            <div class="centered">
-                <input type="radio" id="radio_c" name="z_coord">
-                <span class="label" title="OkLab Chroma">C</span>
-                <input type="range" id="slider_c" class="slider" min="0" max="255" value="126" step="1">
-                <input type="number" id="number_field_c" class="text_field" min="0" max="255" value="0">
-            </div>
-            <div class="centered">
-                <input type="radio" id="radio_h" name="z_coord" checked="checked">
-                <span class="label" title="OkLab Hue">H</span>
-                <input type="range" id="slider_h" class="slider" min="0" max="255" value="126" step="1">
-                <input type="number" id="number_field_h" class="text_field" min="0" max="255" value="0">
-            </div>
-            <div class="centered">
-                <span class="label">Hex Code</span>
-                <input type="text" id="hex_field" class="text_field" value="ff0000">
-            </div>
-        </div>
+        <!--sliders-->
+        <table style="display: inline-block">
+            <tr>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td>
+                    <select id="format_dropdown" class="text_field">
+                        <option value="normalized">0..1</option>
+                        <option value="byte">0..255</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td><input type="radio" id="radio_r" name="z_coord"></td>
+                <td><span class="label" title="Red">R</span></td>
+                <td><input type="range" id="slider_r" class="slider" min="0" max="255" step="1"></td>
+                <td>
+                    <input type="number" id="byte_field_r" class="text_field" min="0" max="255" step="1">
+                    <input type="number" id="normalized_field_r" class="text_field" min="0" max="1" step="0.003">
+                </td>
+            </tr>
+            <tr>
+                <td><input type="radio" id="radio_g" name="z_coord"></td>
+                <td><span class="label" title="Green">G</span></td>
+                <td><input type="range" id="slider_g" class="slider" min="0" max="255" step="1"></td>
+                <td>
+                    <input type="number" id="byte_field_g" class="text_field" min="0" max="255">
+                    <input type="number" id="normalized_field_g" class="text_field" min="0" max="1" step="0.003">
+                </td>
+            </tr>
+            <tr>
+                <td><input type="radio" id="radio_b" name="z_coord"></td>
+                <td><span class="label" title="Blue">B</span></td>
+                <td><input type="range" id="slider_b" class="slider" min="0" max="255" step="1"></td>
+                <td>
+                    <input type="number" id="byte_field_b" class="text_field" min="0" max="255">
+                    <input type="number" id="normalized_field_b" class="text_field" min="0" max="1" step="0.003">
+                </td>
+            </tr>
+            <tr>
+                <td><input type="radio" id="radio_l" name="z_coord"></td>
+                <td><span class="label" title="OkLab Luminocity">L</span></td>
+                <td><input type="range" id="slider_l" class="slider" min="0" max="255" step="1"></td>
+                <td>
+                    <input type="number" id="byte_field_l" class="text_field" min="0" max="255">
+                    <input type="number" id="normalized_field_l" class="text_field" min="0" max="1" step="0.003">
+                </td>
+            </tr>
+            <tr>
+                <td><input type="radio" id="radio_c" name="z_coord"></td>
+                <td><span class="label" title="OkLab Chroma">C</span></td>
+                <td><input type="range" id="slider_c" class="slider" min="0" max="255" step="1"></td>
+                <td>
+                    <input type="number" id="byte_field_c" class="text_field" min="0" max="255">
+                    <input type="number" id="normalized_field_c" class="text_field" min="0" max="1" step="0.003">
+                </td>
+            </tr>
+            <tr>
+                <td><input type="radio" id="radio_h" name="z_coord" checked="checked"></td>
+                <td><span class="label" title="OkLab Hue">H</span></td>
+                <td><input type="range" id="slider_h" class="slider" min="0" max="255" step="1"></td>
+                <td>
+                    <input type="number" id="byte_field_h" class="text_field" min="0" max="255">
+                    <input type="number" id="normalized_field_h" class="text_field" min="0" max="1" step="0.003">
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td colspan="2"><span class="label">Hex Code</span></td>
+                <td><input type="text" id="hex_field" class="text_field"></td>
+            </tr>
+        </table>
 
+        <!--interpolation-->
         <button onclick="clear_cookie()">Reset</Button>
 
     </div>
@@ -112,21 +147,55 @@
         // enable color picker
         document.getElementById("javascript_content").style.display = "inline";
 
+        // get elements
+        const canvas_xy = document.getElementById("canvas_xy");
+        const canvas_z = document.getElementById("canvas_z");
+        const ctx_xy = canvas_xy.getContext('2d');
+        const ctx_z = canvas_z.getContext('2d');
+        const format_dropdown = document.getElementById("format_dropdown");
+        const byte_field_r = document.getElementById("byte_field_r");
+        const byte_field_g = document.getElementById("byte_field_g");
+        const byte_field_b = document.getElementById("byte_field_b");
+        const byte_field_l = document.getElementById("byte_field_l");
+        const byte_field_c = document.getElementById("byte_field_c");
+        const byte_field_h = document.getElementById("byte_field_h");
+        const normalized_field_r = document.getElementById("normalized_field_r");
+        const normalized_field_g = document.getElementById("normalized_field_g");
+        const normalized_field_b = document.getElementById("normalized_field_b");
+        const normalized_field_l = document.getElementById("normalized_field_l");
+        const normalized_field_c = document.getElementById("normalized_field_c");
+        const normalized_field_h = document.getElementById("normalized_field_h");
+
+        // initialize format_dropdown
+        format_dropdown.addEventListener("change", format_dropdown_change_callback);
+
         // read cookie
         const cookie_name = "ris_color_picker_cookie";
         let cookie;
         read_cookie();
 
-        // initialize canvas
-        const canvas_xy = ris_canvas = document.getElementById("canvas_xy");
-        const canvas_z = ris_canvas = document.getElementById("canvas_z");
-        const ctx_xy = canvas_xy.getContext('2d');
-        const ctx_z = canvas_z.getContext('2d');
-
-        ctx_xy.fillStyle = 'red';
-        ctx_xy.fillRect(0, 0, 200, 200);
-
         update_canvas();
+        format_dropdown_change_callback();
+
+        // callbacks
+        function format_dropdown_change_callback() {
+            const selected_value = this.value;
+            const show_byte_field = selected_value === "byte";
+            const byte_display = show_byte_field ? "block" : "none";
+            const normalized_display = show_byte_field ? "none" : "block";
+            byte_field_r.style.display = byte_display;
+            byte_field_g.style.display = byte_display;
+            byte_field_b.style.display = byte_display;
+            byte_field_l.style.display = byte_display;
+            byte_field_c.style.display = byte_display;
+            byte_field_h.style.display = byte_display;
+            normalized_field_r.style.display = normalized_display;
+            normalized_field_g.style.display = normalized_display;
+            normalized_field_b.style.display = normalized_display;
+            normalized_field_l.style.display = normalized_display;
+            normalized_field_c.style.display = normalized_display;
+            normalized_field_h.style.display = normalized_display;
+        }
 
         // canvas functions
         function update_canvas() {
@@ -181,7 +250,6 @@
             }
 
             ctx_z.putImageData(imageData, 0, 0);
-
         }
 
         // cookie functions
@@ -207,7 +275,8 @@
                 console.log("failed to find valid cookie. creating a new one...")
 
                 cookie = {
-                    my_number: 42,
+                    selected_z: "r", // r, g, b, l, c, h,
+                    format_field: "normalized", // "normalized", "byte",
                 }
             }
 
@@ -216,7 +285,7 @@
         }
 
         function save_cookie() {
-            // get expiration date 2 weeks from now
+            // get expiration date 1 week from now
             const date = new Date();
             date.setDate(date.getDate() + 7);
             const expiration_date = date.toUTCString();
