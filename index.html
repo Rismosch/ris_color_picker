@@ -65,9 +65,12 @@
         <!--sliders-->
         <table style="display: inline-block">
             <tr>
-                <td></td>
-                <td></td>
-                <td></td>
+                <td colspan="3">
+                    <select id="clamp_dropdown">
+                        <option value="clamp">clamp invalid colors</option>
+                        <option value="hide">hide invalid colors</option>
+                    </select>
+                </td>
                 <td>
                     <select id="format_dropdown" class="text_field">
                         <option value="normalized">0..1</option>
@@ -84,7 +87,7 @@
                     <input type="number" id="byte_field_r" class="text_field" min="0" max="255" step="1" oninput="handle_rgb_input(this, true)">
                     <input type="number" id="normalized_field_r" class="text_field" min="0" max="1" step="0.004" oninput="handle_rgb_input(this, false)">
                 </td>
-                <td></td>
+                <td><span class="label" id="warning_r" title="this color is outside the sRGB space">&#9888;</span></td>
             </tr>
             <tr>
                 <td><input type="radio" id="radio_g" name="z_coord" value="g"></td>
@@ -94,7 +97,7 @@
                     <input type="number" id="byte_field_g" class="text_field" min="0" max="255" oninput="handle_rgb_input(this, true)">
                     <input type="number" id="normalized_field_g" class="text_field" min="0" max="1" step="0.004" oninput="handle_rgb_input(this, false)">
                 </td>
-                <td></td>
+                <td><span class="label" id="warning_g" title="this color is outside the sRGB space">&#9888;</span></td>
             </tr>
             <tr>
                 <td><input type="radio" id="radio_b" name="z_coord" value="b"></td>
@@ -104,7 +107,7 @@
                     <input type="number" id="byte_field_b" class="text_field" min="0" max="255" oninput="handle_rgb_input(this, true)">
                     <input type="number" id="normalized_field_b" class="text_field" min="0" max="1" step="0.004" oninput="handle_rgb_input(this, false)">
                 </td>
-                <td></td>
+                <td><span class="label" id="warning_b" title="this color is outside the sRGB space">&#9888;</span></td>
             </tr>
             <tr>
                 <td><input type="radio" id="radio_l" name="z_coord" value="l"></td>
@@ -139,10 +142,6 @@
                 <td><input type="text" id="hex_field" class="text_field" oninput="handle_hex_input(this)"></td>
                 <td></td>
             </tr>
-            <tr>
-                <td></td>
-                <td colspan="4"><span class="label" id="rgb_warning">this color is outside the sRGB space.</span></td>
-            </tr>
         </table>
 
         <!--interpolation-->
@@ -156,7 +155,8 @@
     </noscript>
     <script>
         // enable color picker
-        document.getElementById("javascript_content").style.display = "inline";
+        const javascript_content = document.getElementById("javascript_content");
+        javascript_content.style.display = "inline";
 
         // cookie
         const cookie_name = "ris_color_picker_cookie";
@@ -164,9 +164,10 @@
         function set_cookie_to_default() {
             cookie = {
                 selected_z: "h", // r, g, b, l, c, h,
-                color_l: 0.0,
-                color_a: 0.0,
-                color_b: 0.0,
+                clamp_invalid_colors: true,
+                color_l: 0.876,
+                color_a: +0.01880542582664133,
+                color_b: -0.05697680194148045,
                 format_field: "normalized", // "normalized", "byte",
             }
         }
@@ -174,6 +175,7 @@
         // get elements
         const canvas_xy = document.getElementById("canvas_xy");
         const canvas_z = document.getElementById("canvas_z");
+        const clamp_dropdown = document.getElementById("clamp_dropdown");
         const format_dropdown = document.getElementById("format_dropdown");
         const slider_r = document.getElementById("slider_r");
         const slider_g = document.getElementById("slider_g");
@@ -191,7 +193,9 @@
         const normalized_field_c = document.getElementById("normalized_field_c");
         const normalized_field_h = document.getElementById("normalized_field_h");
         const hex_field = document.getElementById("hex_field");
-        const rgb_warning = document.getElementById("rgb_warning");
+        const warning_r = document.getElementById("warning_r");
+        const warning_g = document.getElementById("warning_g");
+        const warning_b = document.getElementById("warning_b");
 
         // initialize canvas
         const ctx_xy = canvas_xy.getContext('2d');
@@ -199,27 +203,30 @@
         const rect_xy = canvas_xy.getBoundingClientRect();
         const rect_z = canvas_z.getBoundingClientRect();
 
-        let is_dragging_xy = false;;
+        let is_dragging_xy = false;
+        let is_dragging_z = false;
+
+        document.body.addEventListener('mousemove', (e) => {
+            if (is_dragging_xy) {
+                drag_xy(e);
+            } else if (is_dragging_z) {
+                drag_z(e);
+            }
+        });
+
+        javascript_content.addEventListener('mouseup', (e) => {
+            is_dragging_xy = false;
+            is_dragging_z = false;
+        });
 
         canvas_xy.addEventListener('mousedown', (e) => {
             is_dragging_xy = true;
             drag_xy(e);
         });
 
-        canvas_xy.addEventListener('mousemove', (e) => {
-            if (is_dragging_xy && e.buttons != 0) {
-                drag_xy(e);
-            }
-        });
-
-        canvas_xy.addEventListener('mouseup', (e) => {
-            is_dragging_xy = false;
-        });
-
-        canvas_xy.addEventListener('mouseout', (e) => {
-            if (is_dragging_xy && e.buttons != 0) {
-                drag_xy(e);
-            }
+        canvas_z.addEventListener('mousedown', (e) => {
+            is_dragging_z = true;
+            drag_z(e);
         });
 
         function drag_xy(e) {
@@ -292,9 +299,69 @@
 
             update_hex();
             update_canvas();
+            update_color();
+            save_cookie();
         }
 
-        // initialize format_dropdown
+        function drag_z(e) {
+            const y = canvas_xy.height - e.clientY + rect_xy.top;
+            let normalized_y = y / canvas_xy.height;
+
+            if (normalized_y < 0) {
+                normalized_y = 0;
+            }
+            if (normalized_y > 1) {
+                normalized_y = 1;
+            }
+
+            switch(cookie.selected_z) {
+                case "r":
+                    byte_field_r.value = Math.round(normalized_y * 255);
+                    normalized_field_r.value = normalized_y.toFixed(3);
+                    update_lch();
+                    break;
+                case "g":
+                    byte_field_g.value = Math.round(normalized_y * 255);
+                    normalized_field_g.value = normalized_y.toFixed(3);
+                    update_lch();
+                    break;
+                case "b":
+                    byte_field_b.value = Math.round(normalized_y * 255);
+                    normalized_field_b.value = normalized_y.toFixed(3);
+                    update_lch();
+                    break;
+                case "l": {
+                    normalized_field_l.value = (normalized_y).toFixed(3);
+                    update_rgb();
+                    break;
+                }
+                case "c": {
+                    normalized_field_c.value = (normalized_y * 0.4).toFixed(3);
+                    update_rgb();
+                    break;
+                }
+                case "h": {
+                    normalized_field_h.value = (normalized_y * 2 * Math.PI - Math.PI).toFixed(3);
+                    update_rgb();
+                    break;
+                }
+            }
+
+            slider_r.value = normalized_field_r.value;
+            slider_g.value = normalized_field_g.value;
+            slider_b.value = normalized_field_b.value;
+            slider_l.value = normalized_field_l.value;
+            slider_c.value = normalized_field_c.value;
+            slider_h.value = normalized_field_h.value;
+
+            update_hex();
+            update_canvas();
+            update_color();
+            save_cookie();
+        }
+
+        // initialize dropdowns
+        clamp_dropdown.addEventListener("change", clamp_dropdown_change_callback)
         format_dropdown.addEventListener("change", format_dropdown_change_callback);
 
         // initialize radio
@@ -305,6 +372,8 @@
                     cookie.selected_z = this.value;
                     save_cookie();
                     update_canvas();
+                    update_color();
+                    save_cookie();
                 }
             });
         });
@@ -316,6 +385,8 @@
             update_lch();
             update_hex();
             update_canvas();
+            update_color();
+            save_cookie();
         });
         slider_g.addEventListener("input", function () {
             normalized_field_g.value = slider_g.value;
@@ -323,6 +394,8 @@
             update_lch();
             update_hex();
             update_canvas();
+            update_color();
+            save_cookie();
         });
         slider_b.addEventListener("input", function () {
             normalized_field_b.value = slider_b.value;
@@ -330,24 +403,32 @@
             update_lch();
             update_hex();
             update_canvas();
+            update_color();
+            save_cookie();
         });
         slider_l.addEventListener("input", function () {
             normalized_field_l.value = slider_l.value;
             update_rgb();
             update_hex();
             update_canvas();
+            update_color();
+            save_cookie();
         });
         slider_c.addEventListener("input", function () {
             normalized_field_c.value = slider_c.value;
             update_rgb();
             update_hex();
             update_canvas();
+            update_color()
+            save_cookie();
         });
         slider_h.addEventListener("input", function () {
             normalized_field_h.value = slider_h.value;
             update_rgb();
             update_hex();
             update_canvas();
+            update_color();
+            save_cookie();
         });
 
         // initialize everthing
@@ -355,13 +436,45 @@
         function initialize_everything() {
             read_cookie();
 
+            const lab = {
+                l: cookie.color_l,
+                a: cookie.color_a,
+                b: cookie.color_b,
+            };
+            const lch = oklab_to_oklch(lab);
+            const normalized_rgb = oklab_to_linear_srgb(lab);
+            const byte_rgb = {
+                r: Math.round(normalized_rgb.r * 255),
+                g: Math.round(normalized_rgb.g * 255),
+                b: Math.round(normalized_rgb.b * 255),
+            };
+
+            slider_r.value = normalized_rgb.r;
+            slider_g.value = normalized_rgb.g;
+            slider_b.value = normalized_rgb.b;
+            slider_l.value = lch.l;
+            slider_c.value = lch.c;
+            slider_h.value = lch.h;
+            byte_field_r.value = byte_rgb.r;
+            byte_field_g.value = byte_rgb.g;
+            byte_field_b.value = byte_rgb.b;
+            normalized_field_r.value = normalized_rgb.r.toFixed(3);
+            normalized_field_g.value = normalized_rgb.g.toFixed(3);
+            normalized_field_b.value = normalized_rgb.b.toFixed(3);
+            normalized_field_l.value = lch.l.toFixed(3);
+            normalized_field_c.value = lch.c.toFixed(3);
+            normalized_field_h.value = lch.h.toFixed(3);
+
             update_canvas();
+            update_hex();
+
+            clamp_dropdown.value = cookie.clamp_invalid_colors ? "clamp" : "hide";
             format_dropdown.value = cookie.format_field;
+
+            clamp_dropdown_change_callback();
             format_dropdown_change_callback();
 
             document.querySelector(`input[name="z_coord"][value="${cookie.selected_z}"]`).checked = true;
-
-            // todo: apply fields and sliders
         }
 
         // callbacks
@@ -405,33 +518,37 @@
             let g = Number(byte_field_g.value);
             let b = Number(byte_field_b.value);
 
-            let is_valid_rgb = true;
+            let r_is_valid = true;
+            let g_is_valid = true;
+            let b_is_valid = true;
             if (r < 0) {
                 r = 0;
-                is_valid_rgb = false;
+                r_is_valid = false;
             }
             if (r > 255) {
                 r = 255;
-                is_valid_rgb = false;
+                r_is_valid = false;
             }
             if (g < 0) {
                 g = 0;
-                is_valid_rgb = false;
+                b_is_valid = false;
             }
             if (g > 255) {
                 g = 255;
-                is_valid_rgb = false;
+                g_is_valid = false;
             }
             if (b < 0) {
                 b = 0;
-                is_valid_rgb = false;
+                g_is_valid = false;
             }
             if (b > 255) {
                 b = 255;
-                is_valid_rgb = false;
+                b_is_valid = false;
             }
 
-            rgb_warning.style.visibility = is_valid_rgb ? "hidden" : "visible";
+            warning_r.style.visibility = r_is_valid ? "hidden" : "visible";
+            warning_g.style.visibility = g_is_valid ? "hidden" : "visible";
+            warning_b.style.visibility = b_is_valid ? "hidden" : "visible";
 
             let hex_r = r.toString(16);
             if (hex_r.length == 1) {
@@ -447,6 +564,27 @@
             }
             const hex_string = `${hex_r}${hex_g}${hex_b}`;
             hex_field.value = hex_string;
+        }
+
+        function update_color() {
+            const lch = {
+                l: Number(normalized_field_l.value),
+                c: Number(normalized_field_c.value),
+                h: Number(normalized_field_h.value),
+            };
+            const lab = oklch_to_oklab(lch);
+            cookie.color_l = lab.l;
+            cookie.color_a = lab.a;
+            cookie.color_b = lab.b;
+        }
+
+        function clamp_dropdown_change_callback() {
+            const selected_value = clamp_dropdown.value;
+            cookie.clamp_invalid_colors = selected_value == "clamp";
+
+            update_canvas();
+            update_color();
+            save_cookie();
         }
 
         function format_dropdown_change_callback() {
@@ -507,6 +645,8 @@
             update_lch();
             update_hex();
             update_canvas();
+            update_color();
+            save_cookie();
         }
 
         function handle_lch_input(input) {
@@ -527,6 +667,8 @@
             update_rgb();
             update_hex();
             update_canvas();
+            update_color();
+            save_cookie();
         }
 
         function handle_hex_input(input) {
@@ -581,9 +723,13 @@
             slider_c.value = normalized_field_c.value;
             slider_h.value = normalized_field_h.value;
 
-            rgb_warning.style.visibility = "hidden";
+            warning_r.style.visibility = "hidden";
+            warning_g.style.visibility = "hidden";
+            warning_b.style.visibility = "hidden";
 
             update_canvas();
+            update_color();
+            save_cookie();
         }
 
         function reset_everything() {
@@ -593,8 +739,6 @@
 
         // canvas functions
         function update_canvas() {
-            const start = performance.now();
-
             const byte_rgb = {
                 r: Number(byte_field_r.value),
                 g: Number(byte_field_g.value),
@@ -705,15 +849,19 @@
                             b: data[i + 0] / 255,
                         };
                         const lab = linear_srgb_to_oklab(data_rgb);
-                        //const test = data[i + 0] + data[i + 1] + data[i + 2];
-                        if (lab.l > 0.8) {
+                        if (lab.l > 0.9) {
                             data[i + 0] = 0;
                             data[i + 1] = 0;
                             data[i + 2] = 0;
-                        } else {
+                        } else if (lab.l < 0.8) {
                             data[i + 0] = 255;
                             data[i + 1] = 255;
                             data[i + 2] = 255;
+                        } else {
+                            const value = lab.l * 10 - 8;
+                            data[i + 0] = 255 - value * 255;
+                            data[i + 1] = 255 - value * 255;
+                            data[i + 2] = 255 - value * 255;
                         }
                     }
                 }
@@ -807,8 +955,7 @@
                             b: data[i + 0] / 255,
                         };
                         const lab = linear_srgb_to_oklab(data_rgb);
-                        //const test = data[i + 0] + data[i + 1] + data[i + 2];
-                        if (lab.l > 0.9) {
+                        if (lab.l > 0.85) {
                             data[i + 0] = 0;
                             data[i + 1] = 0;
                             data[i + 2] = 0;
@@ -822,10 +969,6 @@
             }
 
             ctx_z.putImageData(imageData, 0, 0);
-
-            const end = performance.now();
-            const elapsed = end - start;
-            //console.log(`updated canvas in ${elapsed}`);
         }
 
         // color functions
@@ -833,30 +976,47 @@
             let clamped_r = c.r;
             let clamped_g = c.g;
             let clamped_b = c.b;
+            let was_clamped = false;
+
             if (clamped_r < 0) {
                 clamped_r = 0;
+                was_clamped = true;
             }
             if (clamped_r > 1) {
                 clamped_r = 1;
+                was_clamped = true;
             }
             if (clamped_g < 0) {
                 clamped_g = 0;
+                was_clamped = true;
             }
             if (clamped_g > 1) {
                 clamped_g = 1;
+                was_clamped = true;
             }
             if (clamped_b < 0) {
                 clamped_b = 0;
+                was_clamped = true;
             }
             if (clamped_b > 1) {
                 clamped_b = 1;
+                was_clamped = true;
             }
 
-            return {
-                r: clamped_r,
-                g: clamped_g,
-                b: clamped_b,
-            };
+            if (was_clamped && !cookie.clamp_invalid_colors) {
+                return {
+                    r: 1,
+                    g: 0,
+                    b: 1,
+                };
+            } else {
+                return {
+                    r: clamped_r,
+                    g: clamped_g,
+                    b: clamped_b,
+                };
+            }
+
         }
 
         function linear_srgb_to_oklch(c) {
@@ -923,11 +1083,9 @@
                 const [key, value] = c.split("=");
                 if (key === cookie_name) {
                     try {
-                        console.log("cookie exists! parsing...")
                         cookie = JSON.parse(value);
                         cookie_exists = true;
                     } catch (e) {
-                        console.log(`failed to parse cookie: ${e}`)
                     }
 
                     break;
@@ -935,12 +1093,10 @@
             }
 
             if (!cookie_exists) {
-                console.log("failed to find valid cookie. creating a new one...")
                 set_cookie_to_default();
             }
 
             const cookie_string = JSON.stringify(cookie);
-            console.log(`loaded cookie: ${cookie_string}`);
         }
 
         function save_cookie() {
@@ -949,18 +1105,14 @@
             date.setDate(date.getDate() + 7);
             const expiration_date = date.toUTCString();
 
-            console.log(cookie);
-
             const cookie_data = JSON.stringify(cookie);
 
-            console.log("setting cookie...");
             document.cookie = `${cookie_name}=${cookie_data}; path=/; expires=${expiration_date}`
-            console.log("set cookie: " + document.cookie);
+            console.log(document.cookie);
         }
 
         function clear_cookie() {
             document.cookie = `${cookie_name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-            console.log("cleared cookie");
         }
     </script>
 </body>
