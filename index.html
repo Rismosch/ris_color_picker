@@ -147,7 +147,10 @@
         <!--interpolation-->
         <div>
         <button onclick="reset_everything()">Reset</Button>
+        <p>todo: color scheme creator</p>
+        <p>todo: interpolator</p>
         </div>
+
 
     </div>
     <noscript>
@@ -431,6 +434,67 @@
             save_cookie();
         });
 
+        // initialize warnings
+        warning_r.addEventListener('click', function (){
+            fix_color("r");
+        });
+        warning_g.addEventListener('click', function (){
+            fix_color("g");
+        });
+        warning_b.addEventListener('click', function (){
+            fix_color("b");
+        });
+        function fix_color(c) {
+            switch (c) {
+                case "r":
+                    let r = Number(normalized_field_r.value);
+                    if (r < 0) {
+                        r = 0;
+                    }
+                    if (r > 1) {
+                        r = 1;
+                    }
+                    normalized_field_r.value = r.toFixed(3);
+                    byte_field_r.value = Math.round(r * 255);
+                    break;
+                case "g":
+                    let g = Number(normalized_field_g.value);
+                    if (g < 0) {
+                        g = 0;
+                    }
+                    if (g > 1) {
+                        g = 1;
+                    }
+                    normalized_field_g.value = g.toFixed(3);
+                    byte_field_g.value = Math.round(g * 255);
+                    break;
+                case "b":
+                    let b = Number(normalized_field_b.value);
+                    if (b < 0) {
+                        b = 0;
+                    }
+                    if (b > 1) {
+                        b = 1;
+                    }
+                    normalized_field_b.value = b.toFixed(3);
+                    byte_field_b.value = Math.round(b * 255);
+                    break;
+            }
+
+            slider_r.value = normalized_field_r.value;
+            slider_g.value = normalized_field_g.value;
+            slider_b.value = normalized_field_b.value;
+            slider_l.value = normalized_field_l.value;
+            slider_c.value = normalized_field_c.value;
+            slider_h.value = normalized_field_h.value;
+
+            update_lch();
+            update_color();
+            update_canvas();
+            update_hex();
+            save_cookie();
+        }
+
         // initialize everthing
         initialize_everything();
         function initialize_everything() {
@@ -531,7 +595,7 @@
             }
             if (g < 0) {
                 g = 0;
-                b_is_valid = false;
+                g_is_valid = false;
             }
             if (g > 255) {
                 g = 255;
@@ -539,7 +603,7 @@
             }
             if (b < 0) {
                 b = 0;
-                g_is_valid = false;
+                b_is_valid = false;
             }
             if (b > 255) {
                 b = 255;
@@ -1108,7 +1172,6 @@
             const cookie_data = JSON.stringify(cookie);
 
             document.cookie = `${cookie_name}=${cookie_data}; path=/; expires=${expiration_date}`
-            console.log(document.cookie);
         }
 
         function clear_cookie() {
