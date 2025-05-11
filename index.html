@@ -87,7 +87,7 @@
                     <input type="number" id="byte_field_r" class="text_field" min="0" max="255" step="1" oninput="handle_rgb_input(this, true)">
                     <input type="number" id="normalized_field_r" class="text_field" min="0" max="1" step="0.004" oninput="handle_rgb_input(this, false)">
                 </td>
-                <td><span class="label" id="warning_r" title="this color is outside the sRGB space">&#9888;</span></td>
+                <td><span class="label" id="warning_r" title="this color is outside the sRGB space">&#128721;</span></td>
             </tr>
             <tr>
                 <td><input type="radio" id="radio_g" name="z_coord" value="g"></td>
@@ -97,7 +97,7 @@
                     <input type="number" id="byte_field_g" class="text_field" min="0" max="255" oninput="handle_rgb_input(this, true)">
                     <input type="number" id="normalized_field_g" class="text_field" min="0" max="1" step="0.004" oninput="handle_rgb_input(this, false)">
                 </td>
-                <td><span class="label" id="warning_g" title="this color is outside the sRGB space">&#9888;</span></td>
+                <td><span class="label" id="warning_g" title="this color is outside the sRGB space">&#128721;</span></td>
             </tr>
             <tr>
                 <td><input type="radio" id="radio_b" name="z_coord" value="b"></td>
@@ -107,7 +107,7 @@
                     <input type="number" id="byte_field_b" class="text_field" min="0" max="255" oninput="handle_rgb_input(this, true)">
                     <input type="number" id="normalized_field_b" class="text_field" min="0" max="1" step="0.004" oninput="handle_rgb_input(this, false)">
                 </td>
-                <td><span class="label" id="warning_b" title="this color is outside the sRGB space">&#9888;</span></td>
+                <td><span class="label" id="warning_b" title="this color is outside the sRGB space">&#128721;</span></td>
             </tr>
             <tr>
                 <td><input type="radio" id="radio_l" name="z_coord" value="l"></td>
@@ -130,9 +130,9 @@
             <tr>
                 <td><input type="radio" id="radio_h" name="z_coord" value="h"></td>
                 <td><span class="label" title="OkLab Hue">H</span></td>
-                <td><input type="range" id="slider_h" class="slider" min="-3.142" max="3.142" step="0.001"></td>
+                <td><input type="range" id="slider_h" class="slider" min="-3.141" max="3.141" step="0.009"></td>
                 <td>
-                    <input type="number" id="normalized_field_h" class="text_field" min="-3.142" max="3.142" step="0.001" oninput="handle_lch_input(this)">
+                    <input type="number" id="normalized_field_h" class="text_field" min="-3.141" max="3.141" step="0.009" oninput="handle_lch_input(this)">
                 </td>
                 <td></td>
             </tr>
@@ -168,9 +168,9 @@
             cookie = {
                 selected_z: "h", // r, g, b, l, c, h,
                 clamp_invalid_colors: true,
-                color_l: 0.876,
-                color_a: +0.01880542582664133,
-                color_b: -0.05697680194148045,
+                color_l: 0.748,
+                color_a: -0.03250112244863629,
+                color_b: -0.11966485298356720,
                 format_field: "normalized", // "normalized", "byte",
             }
         }
@@ -1172,6 +1172,7 @@
             const cookie_data = JSON.stringify(cookie);
 
             document.cookie = `${cookie_name}=${cookie_data}; path=/; expires=${expiration_date}`
+            //console.log(document.cookie);
         }
 
         function clear_cookie() {
