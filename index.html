@@ -168,9 +168,9 @@
             cookie = {
                 selected_z: "h", // r, g, b, l, c, h,
                 clamp_invalid_colors: true,
-                color_l: 0.748,
-                color_a: -0.03250112244863629,
-                color_b: -0.11966485298356720,
+                color_l: 0.828,
+                color_a: -0.018675723091779266,
+                color_b: -0.0818976029380542,
                 format_field: "normalized", // "normalized", "byte",
             }
         }
@@ -211,7 +211,11 @@
 
         document.body.addEventListener('mousemove', (e) => {
             if (is_dragging_xy) {
+                const start = performance.now();
                 drag_xy(e);
+                const end = performance.now();
+                const diff = end - start;
+                console.log(`dragged in ${diff} ms`);
             } else if (is_dragging_z) {
                 drag_z(e);
             }
@@ -797,7 +801,17 @@
         }
 
         function reset_everything() {
+            const selected_z = cookie.selected_z;
+            const clamp_invalid_colors = cookie.clamp_invalid_colors;
+            const format_field = cookie.format_field;
+
             clear_cookie();
+            set_cookie_to_default();
+            cookie.selected_z = selected_z;
+            cookie.clamp_invalid_colors = clamp_invalid_colors;
+            cookie.format_field = format_field;
+            save_cookie();
+
             initialize_everything();
         }
 
@@ -1040,29 +1054,32 @@
             let clamped_r = c.r;
             let clamped_g = c.g;
             let clamped_b = c.b;
+            let byte_r = Math.round(c.r * 255);
+            let byte_g = Math.round(c.g * 255);
+            let byte_b = Math.round(c.b * 255);
             let was_clamped = false;
 
-            if (clamped_r < 0) {
+            if (byte_r < 0) {
                 clamped_r = 0;
                 was_clamped = true;
             }
-            if (clamped_r > 1) {
+            if (byte_r > 255) {
                 clamped_r = 1;
                 was_clamped = true;
             }
-            if (clamped_g < 0) {
+            if (byte_g < 0) {
                 clamped_g = 0;
                 was_clamped = true;
             }
-            if (clamped_g > 1) {
+            if (byte_g > 255) {
                 clamped_g = 1;
                 was_clamped = true;
             }
-            if (clamped_b < 0) {
+            if (byte_b < 0) {
                 clamped_b = 0;
                 was_clamped = true;
             }
-            if (clamped_b > 1) {
+            if (byte_b > 255) {
                 clamped_b = 1;
                 was_clamped = true;
             }
@@ -1159,8 +1176,6 @@
             if (!cookie_exists) {
                 set_cookie_to_default();
             }
-
-            const cookie_string = JSON.stringify(cookie);
         }
 
         function save_cookie() {
