@@ -142,15 +142,128 @@
                 <td><input type="text" id="hex_field" class="text_field" oninput="handle_hex_input(this)"></td>
                 <td></td>
             </tr>
+            <tr>
+                <td></td>
+                <td colspan="2"><span class="label">Background</span></td>
+                <td><input type="text" id="background_field" class="text_field"></td>
+                <td></td>
+            </tr>
         </table>
 
-        <!--interpolation-->
-        <div>
-        <button onclick="reset_everything()">Reset</Button>
-        <p>todo: color scheme creator</p>
-        <p>todo: interpolator</p>
-        </div>
+        <!--color scheme generator-->
+        <br>
 
+        <table style="display: inline-block">
+            <tr>
+                <td colspan="2">
+                    <select id="interpolation_dropdown">
+                        <option value="none">no interpolation</option>
+                        <option value="oklab">interpolate OkLab</option>
+                        <option value="rgb">interpolate sRGB</option>
+                    </select>
+                </td>
+                <td><input type="checkbox" id="hide_ui"></td>
+                <td><span class="label">Hide UI</span></td>
+            </tr>
+            <tr>
+                <td colspan="4"><canvas id="canvas_interpolation" class="canvas" width="256" height="32"></canvas></td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <select id="stepmode_dropdown">
+                        <option value="rgb">sRGB</option>
+                        <option value="lch">OkLch</option>
+                    </select>
+                </td>
+                <td colspan="2"><span class="label">Uniform</span></td>
+            </tr>
+            <tr>
+                <td><span class="label" title="Red">R</span></td>
+                <td><input type="number" id="step_r" class="text_field" min="-1" max="1" step="0.004"></td>
+                <td><input type="checkbox" id="uniform_r"></td>
+            </tr>
+            <tr>
+                <td><span class="label" title="Green">G</span></td>
+                <td><input type="number" id="step_g" class="text_field" min="-1" max="1" step="0.004"></td>
+                <td><input type="checkbox" id="uniform_g"></td>
+            </tr>
+            <tr>
+                <td><span class="label" title="Red">B</span></td>
+                <td><input type="number" id="step_b" class="text_field" min="-1" max="1" step="0.004"></td>
+                <td><input type="checkbox" id="uniform_b"></td>
+            </tr>
+            <tr>
+                <td><span class="label" title="OkLab Luminocity">L</span></td>
+                <td><input type="number" id="step_l" class="text_field" min="-1" max="1" step="0.004"></td>
+                <td><input type="checkbox" id="uniform_l"></td>
+            </tr>
+            <tr>
+                <td><span class="label" title="OkLab Chroma">C</span></td>
+                <td><input type="number" id="step_c" class="text_field" min="-1" max="1" step="0.004"></td>
+                <td><input type="checkbox" id="uniform_c"></td>
+            </tr>
+            <tr>
+                <td><span class="label" title="OkLab Hue">H</span></td>
+                <td><input type="number" id="step_h" class="text_field" min="-3.141" max="3.141" step="0.009"></td>
+                <td><input type="checkbox" id="uniform_h"></td>
+            </tr>
+        </table>
+
+        <table style="display: inline-block">
+            <tr>
+                <td><input type="checkbox" id="custom_editing"></td>
+                <td><span class="label">custom editing</span></td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <div style="display: inline-block; border: 1px solid black;">
+                        <table>
+                            <tr><td>Color 0</td></tr>
+                            <tr><td><input type="text" class="text_field"></td></tr>
+                            <tr><td>
+                                <div>
+                                    <button style="display: inline; width:32px;">&lt;</button>
+                                    <button style="display: inline; width:32px;">&gt;</button>
+                                </div>
+                            </td></tr>
+                        </table>
+                    </div>
+                    <div style="display: inline-block; border: 1px solid black;">
+                        <table>
+                            <tr><td>Color 0</td></tr>
+                            <tr><td><input type="text" class="text_field"></td></tr>
+                            <tr><td>
+                                <div>
+                                    <button style="display: inline; width:32px;">&lt;</button>
+                                    <button style="display: inline; width:32px;">&gt;</button>
+                                </div>
+                            </td></tr>
+                        </table>
+                    </div>
+                    <div style="display: inline-block; border: 1px solid black;">
+                        <table>
+                            <tr><td>Color 0</td></tr>
+                            <tr><td><input type="text" class="text_field"></td></tr>
+                            <tr><td>
+                                <div>
+                                    <button style="display: inline; width:32px;">&lt;</button>
+                                    <button style="display: inline; width:32px;">&gt;</button>
+                                </div>
+                            </td></tr>
+                        </table>
+                    </div>
+
+                    <div style="display: inline-block">
+                        <button>Add</button>
+                        <button>Remove</button>
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <div>
+            <button onclick="reset_everything()">reset everything</Button>
+        </div>
 
     </div>
     <noscript>
