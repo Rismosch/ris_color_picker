@@ -192,55 +192,12 @@
             <tr>
                 <td colspan="4"><canvas id="canvas_interpolation" class="canvas" width="256" height="32" style="position: relative; z-index: 10000"></canvas></td>
             </tr>
-            <tr>
-                <td colspan="2">
-                    <select id="stepmode_dropdown">
-                        <option value="rgb">sRGB</option>
-                        <option value="lch">OkLch</option>
-                    </select>
-                </td>
-                <td colspan="2"><span class="label">Uniform</span></td>
-            </tr>
-            <tr id="step_row_r">
-                <td style="width: 30px;"><span class="label" title="Red">R</span></td>
-                <td><input type="number" id="step_r_field" class="text_field" min="-1" max="1" step="0.004" oninput="handle_step_input(this)"></td>
-                <td><input type="checkbox" id="uniform_r_checkbox"></td>
-            </tr>
-            <tr id="step_row_g">
-                <td style="width: 30px;"><span class="label" title="Green">G</span></td>
-                <td><input type="number" id="step_g_field" class="text_field" min="-1" max="1" step="0.004" oninput="handle_step_input(this)"></td>
-                <td><input type="checkbox" id="uniform_g_checkbox"></td>
-            </tr>
-            <tr id="step_row_b">
-                <td style="width: 30px;"><span class="label" title="Red">B</span></td>
-                <td><input type="number" id="step_b_field" class="text_field" min="-1" max="1" step="0.004" oninput="handle_step_input(this)"></td>
-                <td><input type="checkbox" id="uniform_b_checkbox"></td>
-            </tr>
-            <tr id="step_row_l">
-                <td style="width: 30px;"><span class="label" title="OkLab Luminocity">L</span></td>
-                <td><input type="number" id="step_l_field" class="text_field" min="-1" max="1" step="0.004" oninput="handle_step_input(this)"></td>
-                <td><input type="checkbox" id="uniform_l_checkbox"></td>
-            </tr>
-            <tr id="step_row_c">
-                <td style="width: 30px;"><span class="label" title="OkLab Chroma">C</span></td>
-                <td><input type="number" id="step_c_field" class="text_field" min="-1" max="1" step="0.004" oninput="handle_step_input(this)"></td>
-                <td><input type="checkbox" id="uniform_c_checkbox"></td>
-            </tr>
-            <tr id="step_row_h">
-                <td style="width: 30px;"><span class="label" title="OkLab Hue">H</span></td>
-                <td><input type="number" id="step_h_field" class="text_field" min="-3.141" max="3.141" step="0.009" oninput="handle_step_input(this)"></td>
-                <td><input type="checkbox" id="uniform_h_checkbox"></td>
-            </tr>
         </table>
 
         <br>
 
         <!--color scheme colors-->
         <table style="display: inline-block; vertical-align: top;">
-            <tr style="height: 25px">
-                <td style="width: 26px;"><input type="checkbox" id="custom_editing_checkbox"></td>
-                <td><span class="label">custom editing</span></td>
-            </tr>
             <tr>
                 <td colspan="2" id="color_container">
                     <!--color html here-->
@@ -252,9 +209,9 @@
         <div id="background_overlay" style="display: none;">
         </div>
 
-        <div>
+        <!--<div>
             <button onclick="reset_everything()">reset everything</Button>
-        </div>
+        </div>-->
 
     </div>
     <noscript>
@@ -301,26 +258,6 @@
 
         const interpolation_dropdown = document.getElementById("interpolation_dropdown");
         const canvas_interpolation = document.getElementById("canvas_interpolation");
-        const stepmode_dropdown = document.getElementById("stepmode_dropdown");
-        const step_row_r = document.getElementById("step_row_r");
-        const step_row_g = document.getElementById("step_row_g");
-        const step_row_b = document.getElementById("step_row_b");
-        const step_row_l = document.getElementById("step_row_l");
-        const step_row_c = document.getElementById("step_row_c");
-        const step_row_h = document.getElementById("step_row_h");
-        const step_r_field = document.getElementById("step_r_field");
-        const step_g_field = document.getElementById("step_g_field");
-        const step_b_field = document.getElementById("step_b_field");
-        const step_l_field = document.getElementById("step_l_field");
-        const step_c_field = document.getElementById("step_c_field");
-        const step_h_field = document.getElementById("step_h_field");
-        const uniform_r_checkbox = document.getElementById("uniform_r_checkbox");
-        const uniform_g_checkbox = document.getElementById("uniform_g_checkbox");
-        const uniform_b_checkbox = document.getElementById("uniform_b_checkbox");
-        const uniform_l_checkbox = document.getElementById("uniform_l_checkbox");
-        const uniform_c_checkbox = document.getElementById("uniform_c_checkbox");
-        const uniform_h_checkbox = document.getElementById("uniform_h_checkbox");
-        const custom_editing_checkbox = document.getElementById("custom_editing_checkbox");
 
         const background_actual = document.body; // todo replace this with the actual container that embeds this color picker
         const background_overlay = document.getElementById("background_overlay");
@@ -498,7 +435,6 @@
         clamp_dropdown.addEventListener("change", clamp_dropdown_change_callback)
         format_dropdown.addEventListener("change", format_dropdown_change_callback);
         interpolation_dropdown.addEventListener("change", interpolation_dropdown_change_callback);
-        stepmode_dropdown.addEventListener("change", stepmode_dropdown_change_callback);
 
         // initialize radio
         const radios = document.querySelectorAll('input[name="z_coord"]');
@@ -512,29 +448,6 @@
                     save_cookie();
                 }
             });
-        });
-
-        // initialize checkboxes
-        uniform_r_checkbox.addEventListener('change', uniform_checkbox_change_callback);
-        uniform_g_checkbox.addEventListener('change', uniform_checkbox_change_callback);
-        uniform_b_checkbox.addEventListener('change', uniform_checkbox_change_callback);
-        uniform_l_checkbox.addEventListener('change', uniform_checkbox_change_callback);
-        uniform_c_checkbox.addEventListener('change', uniform_checkbox_change_callback);
-        uniform_h_checkbox.addEventListener('change', uniform_checkbox_change_callback);
-
-        function uniform_checkbox_change_callback() {
-            update_step();
-            save_cookie();
-        }
-
-        custom_editing_checkbox.addEventListener('change', function(){
-            const checked = custom_editing_checkbox.checked;
-            cookie.custom_editing = checked;
-
-            update_custom_editing();
-            redraw_colors();
-            redraw_interpolation();
-            save_cookie();
         });
 
         // initialize slider
@@ -710,35 +623,19 @@
             normalized_field_l.value = lch.l.toFixed(3);
             normalized_field_c.value = lch.c.toFixed(3);
             normalized_field_h.value = lch.h.toFixed(3);
-            step_r_field.value = cookie.step_r_value;
-            step_g_field.value = cookie.step_g_value;
-            step_b_field.value = cookie.step_b_value;
-            step_l_field.value = cookie.step_l_value;
-            step_c_field.value = cookie.step_c_value;
-            step_h_field.value = cookie.step_h_value;
 
             background_hex_field.value = lab_to_hex(cookie.background).code;
 
             update_canvas();
             update_hex();
             update_background();
-            update_custom_editing();
 
             clamp_dropdown.value = cookie.clamp_invalid_colors ? "clamp" : "hide";
             format_dropdown.value = cookie.format_field;
             interpolation_dropdown.value = cookie.interpolation;
-            stepmode_dropdown.value = cookie.step_mode;
-
-            uniform_r_checkbox.checked = cookie.step_r_uniform;
-            uniform_g_checkbox.checked = cookie.step_g_uniform;
-            uniform_b_checkbox.checked = cookie.step_b_uniform;
-            uniform_l_checkbox.checked = cookie.step_l_uniform;
-            uniform_c_checkbox.checked = cookie.step_c_uniform;
-            uniform_h_checkbox.checked = cookie.step_h_uniform;
 
             clamp_dropdown_change_callback();
             format_dropdown_change_callback();
-            stepmode_dropdown_change_callback();
 
             document.querySelector(`input[name="z_coord"][value="${cookie.selected_z}"]`).checked = true;
 
@@ -901,40 +798,6 @@
             });
         }
 
-        function update_step() {
-            cookie.step_r_value = Number(step_r_field.value);
-            cookie.step_g_value = Number(step_g_field.value);
-            cookie.step_b_value = Number(step_b_field.value);
-            cookie.step_l_value = Number(step_l_field.value);
-            cookie.step_c_value = Number(step_c_field.value);
-            cookie.step_h_value = Number(step_h_field.value);
-            cookie.step_r_uniform = uniform_r_checkbox.checked;
-            cookie.step_g_uniform = uniform_g_checkbox.checked;
-            cookie.step_b_uniform = uniform_b_checkbox.checked;
-            cookie.step_l_uniform = uniform_l_checkbox.checked;
-            cookie.step_c_uniform = uniform_c_checkbox.checked;
-            cookie.step_h_uniform = uniform_h_checkbox.checked;
-        }
-
-        function update_custom_editing() {
-            const can_edit = cookie.custom_editing;
-            custom_editing_checkbox.checked = can_edit;
-
-            stepmode_dropdown.disabled = can_edit;
-            step_r_field.disabled = can_edit;
-            step_g_field.disabled = can_edit;
-            step_b_field.disabled = can_edit;
-            step_l_field.disabled = can_edit;
-            step_c_field.disabled = can_edit;
-            step_h_field.disabled = can_edit;
-            uniform_r_checkbox.disabled = can_edit;
-            uniform_g_checkbox.disabled = can_edit;
-            uniform_b_checkbox.disabled = can_edit;
-            uniform_l_checkbox.disabled = can_edit;
-            uniform_c_checkbox.disabled = can_edit;
-            uniform_h_checkbox.disabled = can_edit;
-        }
-
         function clamp_dropdown_change_callback() {
             const selected_value = clamp_dropdown.value;
             cookie.clamp_invalid_colors = selected_value == "clamp";
@@ -963,24 +826,6 @@
         function interpolation_dropdown_change_callback() {
             const selected_value = interpolation_dropdown.value;
             cookie.interpolation = selected_value;
-            redraw_interpolation();
-            save_cookie();
-        }
-
-        function stepmode_dropdown_change_callback() {
-            const selected_value = stepmode_dropdown.value;
-            const show_rgb_step = selected_value === "rgb";
-            const rgb_display = show_rgb_step ? "table-row" : "none";
-            const lch_display = show_rgb_step ? "none" : "table-row";
-            step_row_r.style.display = rgb_display;
-            step_row_g.style.display = rgb_display;
-            step_row_b.style.display = rgb_display;
-            step_row_l.style.display = lch_display;
-            step_row_c.style.display = lch_display;
-            step_row_h.style.display = lch_display;
-
-            cookie.step_mode = selected_value;
-            redraw_colors();
             redraw_interpolation();
             save_cookie();
         }
@@ -1140,57 +985,7 @@
             save_cookie();
         }
 
-        function handle_step_input(input) {
-            const number = parseFloat(input.value);
-
-            if (isNaN(number)) {
-                input.value = 0;
-            } else if (number < input.min) {
-                input.value = input.min;
-            } else if (number > input.max) {
-                input.value = input.max;
-            }
-
-            update_step();
-            redraw_colors();
-            redraw_interpolation();
-            save_cookie();
-        }
-
         function redraw_colors() {
-            //const recalculate_colors = cookie.selected >= 0 && !cookie.custom_editing;
-            //if (recalculate_colors) {
-            //    const lab = cookie.colors[cookie.selected];
-            //    for (let i = 0; i < cookie.colors.length; ++i) {
-            //        if (i == cookie.selected) {
-            //            continue
-            //        }
-
-            //        const step = i - cookie.selected;
-
-            //        switch(cookie.step_mode) {
-            //            case "rgb": {
-            //                const rgb = oklab_to_linear_srgb(lab);
-            //                const step_size_r = Number(step_r_field.value);
-            //                const step_size_g = Number(step_g_field.value);
-            //                const step_size_b = Number(step_b_field.value);
-            //                const new_rgb = {
-            //                    r: rgb.r + step * step_size_r,
-            //                    g: rgb.g + step * step_size_g,
-            //                    b: rgb.b + step * step_size_b,
-            //                };
-            //                const new_lab = linear_srgb_to_oklab(new_rgb);
-            //                cookie.colors[i] = new_lab;
-            //                break;
-            //            }
-            //            case "lch": {
-            //                console.log("lch");
-            //                break;
-            //            }
-            //        }
-            //    }
-            //}
-
             let newHTML = "";
 
             for (let i = 0; i < cookie.colors.length; ++i) {
@@ -1429,7 +1224,6 @@
             const clamp_invalid_colors = cookie.clamp_invalid_colors;
             const format_field = cookie.format_field;
             const interpolation = cookie.interpolation;
-            const step_mode = cookie.step_mode;
 
             clear_cookie();
             set_cookie_to_default();
@@ -1438,7 +1232,6 @@
             cookie.clamp_invalid_colors = clamp_invalid_colors;
             cookie.format_field = format_field;
             cookie.interpolation = interpolation;
-            cookie.step_mode = step_mode;
 
             save_cookie();
 
@@ -1921,25 +1714,11 @@
                 color_b: -0.0818976029380542,
                 format_field: "normalized", // "normalized", "byte",
                 interpolation: "oklab", // "none", "oklab", "rgb"
-                step_mode: "lch", // "rgb", "lch"
-                step_r_value: 0.0,
-                step_g_value: 0.0,
-                step_b_value: 0.0,
-                step_l_value: 0.0,
-                step_c_value: 0.0,
-                step_h_value: 0.0,
-                step_r_uniform: false,
-                step_g_uniform: false,
-                step_b_uniform: false,
-                step_l_uniform: false,
-                step_c_uniform: false,
-                step_h_uniform: false,
                 background: {
                     l: 0.9850323339423428,
                     a: 0.004844496104840446,
                     b: 0.007201155049766039,
                 },
-                custom_editing: true,
                 selected: 3, // negative numbers represent the background being selected
                 colors: [
                     {
