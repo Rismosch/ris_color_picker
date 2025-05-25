@@ -34,7 +34,7 @@
         }
 
         .label {
-            width: 10px;
+            width: 15px;
             margin: 0px 0px 0px 5px;
             user-select: none;
             border: 1px solid rgba(0, 0, 0, 0);
@@ -76,13 +76,19 @@
         <!--canvas-->
         <table style="display: inline-block">
             <tr>
+                <td id="canvas_label_x" class="label" title="x">x</td>
                 <td><canvas id="canvas_xy" class="canvas" width="256" height="256"></canvas></td>
                 <td><canvas id="canvas_z" class="canvas" width="20" height="256"></canvas></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td id="canvas_label_y" style="text-align: center" class="label" title="y">y</td>
+                <td id="canvas_label_z" style="text-align: center" class="label" title="z">z</td>
             </tr>
         </table>
 
         <!--sliders-->
-        <table style="display: inline-block">
+        <table style="display: inline-block; vertical-align: top;">
             <tr>
                 <td colspan="3">
                     <select id="clamp_dropdown">
@@ -106,7 +112,7 @@
                     <input type="number" id="byte_field_r" class="text_field" min="0" max="255" step="1" oninput="handle_rgb_input(this, true)">
                     <input type="number" id="normalized_field_r" class="text_field" min="0" max="1" step="0.004" oninput="handle_rgb_input(this, false)">
                 </td>
-                <td><span class="label" id="warning_r" title="this color is outside the sRGB space">&#128721;</span></td>
+                <td><span class="label" id="warning_r" title="This color is outside the sRGB space. Click to clamp.">&#128721;</span></td>
             </tr>
             <tr>
                 <td><input type="radio" id="radio_g" name="z_coord" value="g"></td>
@@ -116,7 +122,7 @@
                     <input type="number" id="byte_field_g" class="text_field" min="0" max="255" oninput="handle_rgb_input(this, true)">
                     <input type="number" id="normalized_field_g" class="text_field" min="0" max="1" step="0.004" oninput="handle_rgb_input(this, false)">
                 </td>
-                <td><span class="label" id="warning_g" title="this color is outside the sRGB space">&#128721;</span></td>
+                <td><span class="label" id="warning_g" title="This color is outside the sRGB space. Click to clamp.">&#128721;</span></td>
             </tr>
             <tr>
                 <td><input type="radio" id="radio_b" name="z_coord" value="b"></td>
@@ -126,7 +132,7 @@
                     <input type="number" id="byte_field_b" class="text_field" min="0" max="255" oninput="handle_rgb_input(this, true)">
                     <input type="number" id="normalized_field_b" class="text_field" min="0" max="1" step="0.004" oninput="handle_rgb_input(this, false)">
                 </td>
-                <td><span class="label" id="warning_b" title="this color is outside the sRGB space">&#128721;</span></td>
+                <td><span class="label" id="warning_b" title="This color is outside the sRGB space. Click to clamp.">&#128721;</span></td>
             </tr>
             <tr>
                 <td><input type="radio" id="radio_l" name="z_coord" value="l"></td>
@@ -237,23 +243,7 @@
             </tr>
             <tr>
                 <td colspan="2" id="color_container">
-                    <!--<div style="display: inline-block; border: 1px solid black; outline: 1px solid white;">
-                        <table style="background:#ff00ff">
-                            <tr><td><span class="label selectable">Color 000</span></td></tr>
-                            <tr><td><input type="text" class="text_field"></td></tr>
-                            <tr><td>
-                                <div>
-                                    <button style="display: inline; width:32px;" onclick="select(0)">&lt;</button>
-                                    <button style="display: inline; width:32px;">&gt;</button>
-                                </div>
-                            </td></tr>
-                        </table>
-                    </div>
-
-                    <div style="display: inline-block;">
-                        <button>Add</button><br>
-                        <button>Remove</button><br><br>
-                    </div>-->
+                    <!--color html here-->
                 </td>
             </tr>
         </table>
@@ -282,6 +272,9 @@
         // get elements
         const canvas_xy = document.getElementById("canvas_xy");
         const canvas_z = document.getElementById("canvas_z");
+        const canvas_label_x = document.getElementById("canvas_label_x");
+        const canvas_label_y = document.getElementById("canvas_label_y");
+        const canvas_label_z = document.getElementById("canvas_label_z");
         const clamp_dropdown = document.getElementById("clamp_dropdown");
         const format_dropdown = document.getElementById("format_dropdown");
         const slider_r = document.getElementById("slider_r");
@@ -539,6 +532,8 @@
             cookie.custom_editing = checked;
 
             update_custom_editing();
+            redraw_colors();
+            redraw_interpolation();
             save_cookie();
         });
 
@@ -762,11 +757,11 @@
             normalized_field_h.value = lch.h;
 
             if (index < 0) {
-                background_label.style.border = "1px solid black";
-                background_label.style.outline = "1px solid white";
+                background_label.style.border = "2px solid black";
+                background_label.style.outline = "2px solid white";
             } else {
-                background_label.style.border = "1px solid rgba(0, 0, 0, 0)";
-                background_label.style.outline = "1px solid rgba(0, 0, 0, 0)";
+                background_label.style.border = "2px solid rgba(0, 0, 0, 0)";
+                background_label.style.outline = "2px solid rgba(0, 0, 0, 0)";
             }
 
             update_rgb();
@@ -774,9 +769,9 @@
             update_hex();
             update_canvas();
             update_color();
-            save_cookie();
             redraw_colors();
             redraw_interpolation();
+            save_cookie();
         }
 
         function update_rgb() {
@@ -985,6 +980,8 @@
             step_row_h.style.display = lch_display;
 
             cookie.step_mode = selected_value;
+            redraw_colors();
+            redraw_interpolation();
             save_cookie();
         }
 
@@ -1134,6 +1131,12 @@
             
             cookie.background = lab;
             update_background();
+
+            cookie.selected = -1;
+            background_label.style.border = "2px solid black";
+            background_label.style.outline = "2px solid white";
+            redraw_colors();
+
             save_cookie();
         }
 
@@ -1149,17 +1152,44 @@
             }
 
             update_step();
+            redraw_colors();
+            redraw_interpolation();
             save_cookie();
         }
 
         function redraw_colors() {
-            const recalculate_colors = cookie.selected > 0 && !cookie.custom_editing;
-            if (recalculate_colors) {
-                const color = cookie.colors[cookie.selected];
-                for (let i = 0; i < cookie.colors.length; ++i) {
-                    if (i == cookie.selected);
-                }
-            }
+            //const recalculate_colors = cookie.selected >= 0 && !cookie.custom_editing;
+            //if (recalculate_colors) {
+            //    const lab = cookie.colors[cookie.selected];
+            //    for (let i = 0; i < cookie.colors.length; ++i) {
+            //        if (i == cookie.selected) {
+            //            continue
+            //        }
+
+            //        const step = i - cookie.selected;
+
+            //        switch(cookie.step_mode) {
+            //            case "rgb": {
+            //                const rgb = oklab_to_linear_srgb(lab);
+            //                const step_size_r = Number(step_r_field.value);
+            //                const step_size_g = Number(step_g_field.value);
+            //                const step_size_b = Number(step_b_field.value);
+            //                const new_rgb = {
+            //                    r: rgb.r + step * step_size_r,
+            //                    g: rgb.g + step * step_size_g,
+            //                    b: rgb.b + step * step_size_b,
+            //                };
+            //                const new_lab = linear_srgb_to_oklab(new_rgb);
+            //                cookie.colors[i] = new_lab;
+            //                break;
+            //            }
+            //            case "lch": {
+            //                console.log("lch");
+            //                break;
+            //            }
+            //        }
+            //    }
+            //}
 
             let newHTML = "";
 
@@ -1172,10 +1202,10 @@
                     ? "border: 2px solid black; outline: 2px solid white"
                     : "border: 2px solid rgba(0, 0, 0, 0); outline: 2px solid rgba(0, 0, 0, 0)";
                 newHTML += `
-                    <div style="display: inline-block; ${border_style};">
-                        <table style="background:#${hex.code}">
-                            <tr class="selectable" onclick="select(${i})"><td><span class="label" style="color: ${foreground.color_string}">Color ${i}</span></td></tr>
-                            <tr><td><input type="text" class="text_field" value="${hex.code}"></td></tr>
+                    <div id="color_div_${i}" style="display: inline-block; ${border_style};">
+                        <table id="color_table_${i}" style="background:#${hex.code}">
+                        <tr class="selectable" onclick="select(${i})"><td><span id="color_label_${i}" class="label" style="color: ${foreground.color_string}">Color ${i + 1}</span></td></tr>
+                            <tr><td><input type="text" class="text_field" value="${hex.code}" oninput="handle_color_hex_input(this, ${i})"></td></tr>
                             <tr><td>
                                 <div>
                                     <button style="display: inline; width:32px;" onclick="move_left(${i})">&lt;</button>
@@ -1195,6 +1225,52 @@
             color_container.innerHTML = newHTML;
         }
 
+        function handle_color_hex_input(input, index) {
+            const hex = validate_hex(input);
+            const lab = hex_to_lab(hex);
+
+            const lch = oklab_to_oklch(lab);
+            normalized_field_l.value = lch.l;
+            normalized_field_c.value = lch.c;
+            normalized_field_h.value = lch.h;
+
+            cookie.selected = index;
+            background_label.style.border = "2px solid rgba(0, 0, 0, 0)";
+            background_label.style.outline = "2px solid rgba(0, 0, 0, 0)";
+
+            update_rgb();
+            update_lch();
+            update_hex();
+            update_canvas();
+
+            //update_color();
+            cookie.colors[cookie.selected] = lab;
+
+            //redraw_colors();
+            for(let i = 0; i < cookie.colors.length; ++i) {
+                const color = cookie.colors[i];
+                const foreground = get_foreground_color(lab_to_hex(color));
+                const is_selected = i == cookie.selected;
+                const border_style = is_selected
+                    ? "border: 2px solid black; outline: 2px solid white"
+                    : "border: 2px solid rgba(0, 0, 0, 0); outline: 2px solid rgba(0, 0, 0, 0)";
+
+                    const color_div = document.getElementById(`color_div_${i}`);
+                    color_div.style = `display: inline-block; ${border_style};`;
+
+                    if (is_selected) {
+                        const color_table = document.getElementById(`color_table_${i}`);
+                        const color_label = document.getElementById(`color_label_${i}`);
+                        color_table.style = `background:#${hex.code}`;
+                        color_label.style = `color: ${foreground.color_string}`;
+                    }
+            }
+
+
+            redraw_interpolation();
+            save_cookie();
+        }
+
         function add_color() {
             const rgb = {
                 r: Math.random(),
@@ -1204,9 +1280,7 @@
             const lab = linear_srgb_to_oklab(rgb);
 
             cookie.colors.push(lab);
-            redraw_colors();
-            redraw_interpolation();
-            save_cookie();
+            select(cookie.colors.length - 1);
         }
 
         function remove_color() {
@@ -1586,6 +1660,64 @@
             }
 
             ctx_z.putImageData(imageData, 0, 0);
+
+            // update labels
+            switch (cookie.selected_z) {
+                case "r": {
+                    canvas_label_x.innerHTML = "B";
+                    canvas_label_x.title = "Blue";
+                    canvas_label_y.innerHTML = "G";
+                    canvas_label_y.title = "Green";
+                    canvas_label_z.innerHTML = "R";
+                    canvas_label_z.title = "Red";
+                    break;
+                }
+                case "g": {
+                    canvas_label_x.innerHTML = "B";
+                    canvas_label_x.title = "Blue";
+                    canvas_label_y.innerHTML = "R";
+                    canvas_label_y.title = "Red";
+                    canvas_label_z.innerHTML = "G";
+                    canvas_label_z.title = "Green";
+                    break;
+                }
+                case "b": {
+                    canvas_label_x.innerHTML = "G";
+                    canvas_label_x.title = "Green";
+                    canvas_label_y.innerHTML = "R";
+                    canvas_label_y.title = "Red";
+                    canvas_label_z.innerHTML = "B";
+                    canvas_label_z.title = "Blue";
+                    break;
+                }
+                case "l": {
+                    canvas_label_x.innerHTML = "H";
+                    canvas_label_x.title = "OkLab Hue";
+                    canvas_label_y.innerHTML = "C";
+                    canvas_label_y.title = "OkLab Chroma";
+                    canvas_label_z.innerHTML = "L";
+                    canvas_label_z.title = "OkLab Luminocity";
+                    break;
+                }
+                case "c": {
+                    canvas_label_x.innerHTML = "H";
+                    canvas_label_x.title = "OkLab Hue";
+                    canvas_label_y.innerHTML = "L";
+                    canvas_label_y.title = "OkLab Luminocity";
+                    canvas_label_z.innerHTML = "C";
+                    canvas_label_z.title = "OkLab Chroma";
+                    break;
+                }
+                case "h": {
+                    canvas_label_x.innerHTML = "C";
+                    canvas_label_x.title = "OkLab Chroma";
+                    canvas_label_y.innerHTML = "L";
+                    canvas_label_y.title = "OkLab Luminocity";
+                    canvas_label_z.innerHTML = "H";
+                    canvas_label_z.title = "OkLab Hue";
+                    break;
+                }
+            }
         }
 
         // color functions
@@ -1783,7 +1915,7 @@
         function set_cookie_to_default() {
             cookie = {
                 selected_z: "h", // r, g, b, l, c, h,
-                clamp_invalid_colors: true,
+                clamp_invalid_colors: false,
                 color_l: 0.828,
                 color_a: -0.018675723091779266,
                 color_b: -0.0818976029380542,
@@ -1807,13 +1939,28 @@
                     a: 0.004844496104840446,
                     b: 0.007201155049766039,
                 },
-                custom_editing: false,
-                selected: 0, // negative numbers represent the background being selected
+                custom_editing: true,
+                selected: 3, // negative numbers represent the background being selected
                 colors: [
                     {
-                        l: 0.828,
-                        a: -0.018675723091779266,
-                        b: -0.0818976029380542,
+                      "l": 0.775,
+                      "a": 0.15189972128564153,
+                      "b": -0.018315967715204662
+                    },
+                    {
+                      "l": 0.93,
+                      "a": -0.046818838978830137,
+                      "b": 0.19032602637756713
+                    },
+                    {
+                      "l": 0.992,
+                      "a": 0,
+                      "b": 0
+                    },
+                    {
+                      "l": 0.881,
+                      "a": -0.04897244697005773,
+                      "b": -0.055477017203206615
                     }
                 ]
             }
