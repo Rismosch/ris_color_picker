@@ -37,6 +37,8 @@
             width: 10px;
             margin: 0px 0px 0px 5px;
             user-select: none;
+            border: 1px solid rgba(0, 0, 0, 0);
+            outline: 1px solid rgba(0, 0, 0, 0);
             -webkit-user-select: none; /* Safari */
             -moz-user-select: none;    /* Firefox */
             -ms-user-select: none;     /* Internet Explorer/Edge */
@@ -233,13 +235,13 @@
             </tr>
             <tr>
                 <td colspan="2">
-                    <div style="display: inline-block; border: 1px solid black;">
-                        <table>
+                    <div style="display: inline-block; border: 1px solid black; outline: 1px solid white;">
+                        <table style="background:#ffff00">
                             <tr><td><span class="label selectable">Color 000</span></td></tr>
                             <tr><td><input type="text" class="text_field"></td></tr>
                             <tr><td>
                                 <div>
-                                    <button style="display: inline; width:32px;">&lt;</button>
+                                    <button style="display: inline; width:32px;" onclick="select(0)">&lt;</button>
                                     <button style="display: inline; width:32px;">&gt;</button>
                                 </div>
                             </td></tr>
@@ -274,32 +276,6 @@
         // cookie
         const cookie_name = "ris_color_picker_cookie";
         let cookie;
-        function set_cookie_to_default() {
-            cookie = {
-                selected_z: "h", // r, g, b, l, c, h,
-                clamp_invalid_colors: true,
-                color_l: 0.828,
-                color_a: -0.018675723091779266,
-                color_b: -0.0818976029380542,
-                format_field: "normalized", // "normalized", "byte",
-                step_mode: "lch", // "rgb", "lch"
-                step_r_value: 0.0,
-                step_g_value: 0.0,
-                step_b_value: 0.0,
-                step_l_value: 0.0,
-                step_c_value: 0.0,
-                step_h_value: 0.0,
-                step_r_uniform: false,
-                step_g_uniform: false,
-                step_b_uniform: false,
-                step_l_uniform: false,
-                step_c_uniform: false,
-                step_h_uniform: false,
-                background: "var(--pico-8-white)",
-                custom_editing: false,
-                selected: 0, // negative numbers represent the background being selected
-            }
-        }
 
         // get elements
         const canvas_xy = document.getElementById("canvas_xy");
@@ -322,6 +298,7 @@
         const normalized_field_c = document.getElementById("normalized_field_c");
         const normalized_field_h = document.getElementById("normalized_field_h");
         const hex_field = document.getElementById("hex_field");
+        const background_label = document.getElementById("background_label");
         const background_hex_field = document.getElementById("background_hex_field");
         const warning_r = document.getElementById("warning_r");
         const warning_g = document.getElementById("warning_g");
@@ -695,16 +672,19 @@
             background_overlay.style.background = overlay_color;
         }
 
+        // initialize other
+        background_label.addEventListener('click', function (){
+            select(-1);
+        });
+
         // initialize from cookie
         initialize_everything();
         function initialize_everything() {
             read_cookie();
 
-            const lab = {
-                l: cookie.color_l,
-                a: cookie.color_a,
-                b: cookie.color_b,
-            };
+            select(cookie.selected);
+
+            const lab = get_color();
             const lch = oklab_to_oklch(lab);
             const normalized_rgb = oklab_to_linear_srgb(lab);
             const byte_rgb = {
@@ -735,6 +715,8 @@
             step_c_field.value = cookie.step_c_value;
             step_h_field.value = cookie.step_h_value;
 
+            background_hex_field.value = lab_to_hex(cookie.background).code;
+
             update_canvas();
             update_hex();
             update_background();
@@ -759,6 +741,31 @@
         }
 
         // callbacks
+        function select(index) {
+            cookie.selected = index;
+
+            const lab = get_color();
+            const lch = oklab_to_oklch(lab);
+            normalized_field_l.value = lch.l;
+            normalized_field_c.value = lch.c;
+            normalized_field_h.value = lch.h;
+
+            if (index < 0) {
+                background_label.style.border = "1px solid black";
+                background_label.style.outline = "1px solid white";
+            } else {
+                background_label.style.border = "1px solid rgba(0, 0, 0, 0)";
+                background_label.style.outline = "1px solid rgba(0, 0, 0, 0)";
+            }
+
+            update_rgb();
+            update_lch();
+            update_hex();
+            update_canvas();
+            update_color();
+            save_cookie();
+        }
+
         function update_rgb() {
             const lch = {
                 l: Number(normalized_field_l.value),
@@ -854,31 +861,32 @@
                 h: Number(normalized_field_h.value),
             };
             const lab = oklch_to_oklab(lch);
-            cookie.color_l = lab.l;
-            cookie.color_a = lab.a;
-            cookie.color_b = lab.b;
+
+            if (cookie.selected < 0) {
+                cookie.background = lab;
+                const hex = lab_to_hex(lab);
+                background_hex_field.value = hex.code;
+                update_background();
+            } else {
+                // set selected color
+                cookie.colors[cookie.selected] = lab;
+                redraw_colors();
+            }
+        }
+
+        function get_color() {
+            if (cookie.selected < 0) {
+                return cookie.background;
+            } else {
+                return cookie.colors[cookie.selected];
+            }
         }
 
         function update_background() {
-            const color = cookie.background;
-
-            background_actual.style.background = color;
-
-            // let the browser compute the color
-            const dummy = document.createElement('div');
-            dummy.style.color = color;
-            document.body.appendChild(dummy);
-            const computed = getComputedStyle(dummy).color;
-            document.body.removeChild(dummy);
-            const match = computed.match(/\d+/g).map(Number);
-            const rgb = {
-                r: match[0],
-                g: match[1],
-                b: match[2],
-            };
-
-            const foreground = get_foreground_color(rgb);
-
+            const lab = cookie.background;
+            const hex = lab_to_hex(lab);
+            const foreground = get_foreground_color(hex);
+            background_actual.style.background = `#${hex.code}`;
             labels.forEach(label => {
                 label.style.color = foreground.color_string;
             });
@@ -1056,7 +1064,7 @@
                 r: byte_r,
                 g: byte_g,
                 b: byte_b,
-                code: `#${value}`,
+                code: value,
             };
         }
 
@@ -1101,8 +1109,9 @@
 
         function handle_background_hex_input(input) {
             const hex = validate_hex(input);
+            const lab = hex_to_lab(hex);
             
-            cookie.background = hex.code;
+            cookie.background = lab;
             update_background();
             save_cookie();
         }
@@ -1120,6 +1129,10 @@
 
             update_step();
             save_cookie();
+        }
+
+        function redraw_colors() {
+
         }
 
         function reset_everything() {
@@ -1489,7 +1502,105 @@
             }
         }
 
+        function hex_to_lab(hex) {
+            const normalized_r = hex.r / 255;
+            const normalized_g = hex.g / 255;
+            const normalized_b = hex.b / 255;
+            const rgb = {
+                r: normalized_r,
+                g: normalized_g,
+                b: normalized_b,
+            }
+            const lab = linear_srgb_to_oklab(rgb);
+            return lab;
+        }
+
+        function lab_to_hex(lab) {
+            const rgb = oklab_to_linear_srgb(lab);
+            let byte_r = Math.round(rgb.r * 255);
+            let byte_g = Math.round(rgb.g * 255);
+            let byte_b = Math.round(rgb.b * 255);
+
+            if (byte_r < 0) {
+                byte_r = 0;
+            }
+            if (byte_r > 255) {
+                byte_r = 255;
+            }
+            if (byte_g < 0) {
+                byte_g = 0;
+            }
+            if (byte_g > 255) {
+                byte_g = 255;
+            }
+            if (byte_b < 0) {
+                byte_b = 0;
+            }
+            if (byte_b > 255) {
+                byte_b = 255;
+            }
+
+            let hex_r = byte_r.toString(16);
+            if (hex_r.length == 1) {
+                hex_r = `0${hex_r}`;
+            }
+            let hex_g = byte_g.toString(16);
+            if (hex_g.length == 1) {
+                hex_g = `0${hex_g}`;
+            }
+            let hex_b = byte_b.toString(16);
+            if (hex_b.length == 1) {
+                hex_b = `0${hex_b}`;
+            }
+            const hex_string = `${hex_r}${hex_g}${hex_b}`;
+
+            return {
+                r: byte_r,
+                g: byte_g,
+                b: byte_b,
+                code: hex_string,
+            };
+        }
+
         // cookie functions
+        function set_cookie_to_default() {
+            cookie = {
+                selected_z: "h", // r, g, b, l, c, h,
+                clamp_invalid_colors: true,
+                color_l: 0.828,
+                color_a: -0.018675723091779266,
+                color_b: -0.0818976029380542,
+                format_field: "normalized", // "normalized", "byte",
+                step_mode: "lch", // "rgb", "lch"
+                step_r_value: 0.0,
+                step_g_value: 0.0,
+                step_b_value: 0.0,
+                step_l_value: 0.0,
+                step_c_value: 0.0,
+                step_h_value: 0.0,
+                step_r_uniform: false,
+                step_g_uniform: false,
+                step_b_uniform: false,
+                step_l_uniform: false,
+                step_c_uniform: false,
+                step_h_uniform: false,
+                background: {
+                    l: 0.9850323339423428,
+                    a: 0.004844496104840446,
+                    b: 0.007201155049766039,
+                },
+                custom_editing: false,
+                selected: 0, // negative numbers represent the background being selected
+                colors: [
+                    {
+                        l: 0.828,
+                        a: -0.018675723091779266,
+                        b: -0.0818976029380542,
+                    }
+                ]
+            }
+        }
+
         function read_cookie() {
             let cookie_exists = false;
             const cookies = document.cookie.split("; ");

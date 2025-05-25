@@ -169,9 +169,9 @@
             </tr>
         </table>
 
-        <!--color scheme generator-->
         <br>
 
+        <!--color scheme generator-->
         <table style="display: inline-block; vertical-align: top;">
             <tr style="height: 25px">
                 <td colspan="2">
@@ -227,6 +227,8 @@
             </tr>
         </table>
 
+        <br>
+
         <!--color scheme colors-->
         <table style="display: inline-block; vertical-align: top;">
             <tr style="height: 25px">
@@ -234,9 +236,9 @@
                 <td><span class="label">custom editing</span></td>
             </tr>
             <tr>
-                <td colspan="2">
-                    <div style="display: inline-block; border: 1px solid black; outline: 1px solid white;">
-                        <table style="background:#ffff00">
+                <td colspan="2" id="color_container">
+                    <!--<div style="display: inline-block; border: 1px solid black; outline: 1px solid white;">
+                        <table style="background:#ff00ff">
                             <tr><td><span class="label selectable">Color 000</span></td></tr>
                             <tr><td><input type="text" class="text_field"></td></tr>
                             <tr><td>
@@ -248,10 +250,10 @@
                         </table>
                     </div>
 
-                    <div style="display: inline-block">
+                    <div style="display: inline-block;">
                         <button>Add</button><br>
-                        <button>Remove</button>
-                    </div>
+                        <button>Remove</button><br><br>
+                    </div>-->
                 </td>
             </tr>
         </table>
@@ -304,6 +306,7 @@
         const warning_g = document.getElementById("warning_g");
         const warning_b = document.getElementById("warning_b");
 
+        const interpolation_dropdown = document.getElementById("interpolation_dropdown");
         const canvas_interpolation = document.getElementById("canvas_interpolation");
         const stepmode_dropdown = document.getElementById("stepmode_dropdown");
         const step_row_r = document.getElementById("step_row_r");
@@ -329,14 +332,17 @@
         const background_actual = document.body; // todo replace this with the actual container that embeds this color picker
         const background_overlay = document.getElementById("background_overlay");
 
+        const color_container = document.getElementById("color_container");
 
         const labels = document.querySelectorAll(".label");
 
         // initialize canvas
         const ctx_xy = canvas_xy.getContext('2d');
         const ctx_z = canvas_z.getContext('2d');
+        const ctx_interpolation = canvas_interpolation.getContext('2d');
         const rect_xy = canvas_xy.getBoundingClientRect();
         const rect_z = canvas_z.getBoundingClientRect();
+        const rect_interpolation = canvas_interpolation.getBoundingClientRect();
 
         let is_dragging_xy = false;
         let is_dragging_z = false;
@@ -498,6 +504,7 @@
         // initialize dropdowns
         clamp_dropdown.addEventListener("change", clamp_dropdown_change_callback)
         format_dropdown.addEventListener("change", format_dropdown_change_callback);
+        interpolation_dropdown.addEventListener("change", interpolation_dropdown_change_callback);
         stepmode_dropdown.addEventListener("change", stepmode_dropdown_change_callback);
 
         // initialize radio
@@ -724,6 +731,7 @@
 
             clamp_dropdown.value = cookie.clamp_invalid_colors ? "clamp" : "hide";
             format_dropdown.value = cookie.format_field;
+            interpolation_dropdown.value = cookie.interpolation;
             stepmode_dropdown.value = cookie.step_mode;
 
             uniform_r_checkbox.checked = cookie.step_r_uniform;
@@ -738,6 +746,9 @@
             stepmode_dropdown_change_callback();
 
             document.querySelector(`input[name="z_coord"][value="${cookie.selected_z}"]`).checked = true;
+
+            redraw_colors();
+            redraw_interpolation();
         }
 
         // callbacks
@@ -764,6 +775,8 @@
             update_canvas();
             update_color();
             save_cookie();
+            redraw_colors();
+            redraw_interpolation();
         }
 
         function update_rgb() {
@@ -871,6 +884,7 @@
                 // set selected color
                 cookie.colors[cookie.selected] = lab;
                 redraw_colors();
+                redraw_interpolation();
             }
         }
 
@@ -948,6 +962,13 @@
             normalized_field_b.style.display = normalized_display;
 
             cookie.format_field = format_dropdown.value;
+            save_cookie();
+        }
+
+        function interpolation_dropdown_change_callback() {
+            const selected_value = interpolation_dropdown.value;
+            cookie.interpolation = selected_value;
+            redraw_interpolation();
             save_cookie();
         }
 
@@ -1132,13 +1153,208 @@
         }
 
         function redraw_colors() {
+            const recalculate_colors = cookie.selected > 0 && !cookie.custom_editing;
+            if (recalculate_colors) {
+                const color = cookie.colors[cookie.selected];
+                for (let i = 0; i < cookie.colors.length; ++i) {
+                    if (i == cookie.selected);
+                }
+            }
 
+            let newHTML = "";
+
+            for (let i = 0; i < cookie.colors.length; ++i) {
+                const color = cookie.colors[i];
+                const hex = lab_to_hex(color);
+                const foreground = get_foreground_color(hex);
+                const is_selected = i == cookie.selected;
+                const border_style = is_selected
+                    ? "border: 2px solid black; outline: 2px solid white"
+                    : "border: 2px solid rgba(0, 0, 0, 0); outline: 2px solid rgba(0, 0, 0, 0)";
+                newHTML += `
+                    <div style="display: inline-block; ${border_style};">
+                        <table style="background:#${hex.code}">
+                            <tr class="selectable" onclick="select(${i})"><td><span class="label" style="color: ${foreground.color_string}">Color ${i}</span></td></tr>
+                            <tr><td><input type="text" class="text_field" value="${hex.code}"></td></tr>
+                            <tr><td>
+                                <div>
+                                    <button style="display: inline; width:32px;" onclick="move_left(${i})">&lt;</button>
+                                    <button style="display: inline; width:32px;" onclick="move_right(${i})">&gt;</button>
+                                </div>
+                            </td></tr>
+                        </table>
+                    </div>`;
+            }
+
+            newHTML += `
+                    <div style="display: inline-block;">
+                        <button onclick="add_color()">Add</button><br>
+                        <button onclick="remove_color()">Remove</button><br><br>
+                    </div>`;
+
+            color_container.innerHTML = newHTML;
+        }
+
+        function add_color() {
+            const rgb = {
+                r: Math.random(),
+                g: Math.random(),
+                b: Math.random(),
+            };
+            const lab = linear_srgb_to_oklab(rgb);
+
+            cookie.colors.push(lab);
+            redraw_colors();
+            redraw_interpolation();
+            save_cookie();
+        }
+
+        function remove_color() {
+            if (cookie.colors.length == 1) {
+                return;
+            }
+
+            cookie.colors.pop();
+            redraw_colors();
+            redraw_interpolation();
+            save_cookie();
+        }
+
+        function move_left(index) {
+            if (index == 0) {
+                return;
+            }
+
+            const l = index - 1;
+            const r = index;
+
+            [cookie.colors[r], cookie.colors[l]] = [cookie.colors[l], cookie.colors[r]];
+            select(l);
+        }
+
+        function move_right(index) {
+            if (index + 1 == cookie.colors.length) {
+                return;
+            }
+
+            const l = index;
+            const r = index + 1;
+
+            [cookie.colors[r], cookie.colors[l]] = [cookie.colors[l], cookie.colors[r]];
+            select(r);
+        }
+
+        function redraw_interpolation() {
+            const width = canvas_interpolation.width;
+            const height = canvas_interpolation.height;
+            const imageData = ctx_interpolation.createImageData(width, height);
+            const data = imageData.data;
+
+            switch(cookie.interpolation) {
+                case "none": {
+                    const splits = cookie.colors.length;
+
+                    for (let y = 0; y <= height; ++y) {
+                        for (let x = 0; x < width; ++x) {
+                            const inverted_y = height - y;
+                            const i = (inverted_y * width + x) * 4; // each pixel has 4 values: r, g, b, a
+
+                            const normalized_x = x / width;
+                            const scaled = normalized_x * splits;
+                            const lower = Math.floor(scaled);
+                            const upper = Math.ceil(scaled);
+                            const lerp = scaled % 1;
+
+                            const lab = cookie.colors[lower];
+                            const rgb = oklab_to_linear_srgb(lab);
+
+                            data[i + 0] = rgb.r * 255;
+                            data[i + 1] = rgb.g * 255;
+                            data[i + 2] = rgb.b * 255;
+                            data[i + 3] = 255;
+                        }
+                    }
+
+                    break;
+                }
+                case "oklab": {
+                    const splits = cookie.colors.length - 1;
+
+                    for (let y = 0; y <= height; ++y) {
+                        for (let x = 0; x < width; ++x) {
+                            const inverted_y = height - y;
+                            const i = (inverted_y * width + x) * 4; // each pixel has 4 values: r, g, b, a
+
+                            const normalized_x = x / width;
+                            const scaled = normalized_x * splits;
+                            const lower = Math.floor(scaled);
+                            const upper = Math.ceil(scaled);
+                            const lerp = scaled % 1;
+
+                            const lab_1 = cookie.colors[lower];
+                            const lab_2 = cookie.colors[upper];
+
+                            const l = lab_1.l + lerp * (lab_2.l - lab_1.l);
+                            const a = lab_1.a + lerp * (lab_2.a - lab_1.a);
+                            const b = lab_1.b + lerp * (lab_2.b - lab_1.b);
+                            const lab = {
+                                l: l,
+                                a: a,
+                                b: b,
+                            };
+                            const rgb = oklab_to_linear_srgb(lab);
+
+                            data[i + 0] = rgb.r * 255;
+                            data[i + 1] = rgb.g * 255;
+                            data[i + 2] = rgb.b * 255;
+                            data[i + 3] = 255;
+                        }
+                    }
+
+                    break;
+                }
+                case "rgb": {
+                    const splits = cookie.colors.length - 1;
+
+                    for (let y = 0; y <= height; ++y) {
+                        for (let x = 0; x < width; ++x) {
+                            const inverted_y = height - y;
+                            const i = (inverted_y * width + x) * 4; // each pixel has 4 values: r, g, b, a
+
+                            const normalized_x = x / width;
+                            const scaled = normalized_x * splits;
+                            const lower = Math.floor(scaled);
+                            const upper = Math.ceil(scaled);
+                            const lerp = scaled % 1;
+
+                            const lab_1 = cookie.colors[lower];
+                            const lab_2 = cookie.colors[upper];
+                            const rgb_1 = oklab_to_linear_srgb(lab_1);
+                            const rgb_2 = oklab_to_linear_srgb(lab_2);
+
+                            const r = rgb_1.r + lerp * (rgb_2.r - rgb_1.r);
+                            const g = rgb_1.g + lerp * (rgb_2.g - rgb_1.g);
+                            const b = rgb_1.b + lerp * (rgb_2.b - rgb_1.b);
+
+                            data[i + 0] = r * 255;
+                            data[i + 1] = g * 255;
+                            data[i + 2] = b * 255;
+                            data[i + 3] = 255;
+                        }
+                    }
+
+                    break;
+                }
+            }
+
+            ctx_interpolation.putImageData(imageData, 0, 0);
         }
 
         function reset_everything() {
             const selected_z = cookie.selected_z;
             const clamp_invalid_colors = cookie.clamp_invalid_colors;
             const format_field = cookie.format_field;
+            const interpolation = cookie.interpolation;
             const step_mode = cookie.step_mode;
 
             clear_cookie();
@@ -1147,6 +1363,7 @@
             cookie.selected_z = selected_z;
             cookie.clamp_invalid_colors = clamp_invalid_colors;
             cookie.format_field = format_field;
+            cookie.interpolation = interpolation;
             cookie.step_mode = step_mode;
 
             save_cookie();
@@ -1571,6 +1788,7 @@
                 color_a: -0.018675723091779266,
                 color_b: -0.0818976029380542,
                 format_field: "normalized", // "normalized", "byte",
+                interpolation: "oklab", // "none", "oklab", "rgb"
                 step_mode: "lch", // "rgb", "lch"
                 step_r_value: 0.0,
                 step_g_value: 0.0,
