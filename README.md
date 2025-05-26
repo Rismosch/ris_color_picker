@@ -4,8 +4,6 @@ Single file HTML color picker using [Oklab](https://en.wikipedia.org/wiki/Oklab_
 
 ![thumbnail](screenshot.png)
 
-This color picker implements Oklab, a perceptual color space invented by Björn Ottosson.
-
 Besides RGB (red, green, blue), this color picker also exposes LCH:
 
 - **L**uminocity: How bright the color is.  
