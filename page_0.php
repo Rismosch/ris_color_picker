@@ -205,6 +205,8 @@
 
     let is_dragging_xy = false;
     let is_dragging_z = false;
+    let is_touching_xy = false;
+    let is_touching_z = false;
 
     document.body.addEventListener('mousemove', (e) => {
         if (is_dragging_xy) {
@@ -227,6 +229,33 @@
     canvas_z.addEventListener('mousedown', (e) => {
         is_dragging_z = true;
         drag_z(e);
+    });
+
+    document.body.addEventListener('touchmove', (e) => {
+        if (is_touching_xy) {
+            e.preventDefault();
+            drag_xy(e.touches[0]);
+        } else if (is_touching_z) {
+            e.preventDefault();
+            drag_z(e.touches[0]);
+        }
+    });
+
+    document.body.addEventListener('touchend', (e) => {
+        is_touching_xy = false;
+        is_touching_z = false;
+    });
+
+    canvas_xy.addEventListener('touchstart', (e) => {
+        is_touching_xy = true;
+        e.preventDefault();
+        drag_xy(e.touches[0]);
+    });
+
+    canvas_z.addEventListener('touchstart', (e) => {
+        is_touching_z = true;
+        e.preventDefault();
+        drag_z(e.touches[0]);
     });
 
     function drag_xy(e) {
