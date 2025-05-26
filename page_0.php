@@ -39,7 +39,7 @@
                     <input type="number" id="byte_field_r" class="text_field" min="0" max="255" step="1" oninput="handle_rgb_input(this, true)">
                     <input type="number" id="normalized_field_r" class="text_field" min="0" max="1" step="0.004" oninput="handle_rgb_input(this, false)">
                 </td>
-                <td><span class="label" id="warning_r" title="This color is outside the sRGB space. Click to clamp.">&#128721;</span></td>
+                <td><span class="label" id="warning_r" title="This color is outside the sRGB space">&#128721;</span></td>
             </tr>
             <tr>
                 <td><input type="radio" id="radio_g" name="z_coord" value="g"></td>
@@ -49,7 +49,7 @@
                     <input type="number" id="byte_field_g" class="text_field" min="0" max="255" oninput="handle_rgb_input(this, true)">
                     <input type="number" id="normalized_field_g" class="text_field" min="0" max="1" step="0.004" oninput="handle_rgb_input(this, false)">
                 </td>
-                <td><span class="label" id="warning_g" title="This color is outside the sRGB space. Click to clamp.">&#128721;</span></td>
+                <td><span class="label" id="warning_g" title="This color is outside the sRGB space">&#128721;</span></td>
             </tr>
             <tr>
                 <td><input type="radio" id="radio_b" name="z_coord" value="b"></td>
@@ -59,7 +59,7 @@
                     <input type="number" id="byte_field_b" class="text_field" min="0" max="255" oninput="handle_rgb_input(this, true)">
                     <input type="number" id="normalized_field_b" class="text_field" min="0" max="1" step="0.004" oninput="handle_rgb_input(this, false)">
                 </td>
-                <td><span class="label" id="warning_b" title="This color is outside the sRGB space. Click to clamp.">&#128721;</span></td>
+                <td><span class="label" id="warning_b" title="This color is outside the sRGB space">&#128721;</span></td>
             </tr>
             <tr>
                 <td><input type="radio" id="radio_l" name="z_coord" value="l"></td>
@@ -143,6 +143,26 @@
         </div>-->
     
     </div>
+    
+    <!--description-->
+    <p>This color picker implements <a href="https://en.wikipedia.org/wiki/Oklab_color_space" target="_blank" rel="noopener noreferrer">Oklab</a>, a <a href="https://bottosson.github.io/posts/oklab/" target="_blank" rel="noopener noreferrer">perceptual color space</a> invented by Björn Ottosson.</p>
+
+    <p>Besides RGB (red, green, blue), this color picker also exposes LCH:</p>
+
+    <ul>
+    <li><u>L</u>uminocity: How bright the color is.<br>Goes from black to white.</li>
+    <li><u>C</u>hroma: How strong or saturated the color is.<br>Goes from colorless, grey, to colorful.</li>
+    <li><u>H</u>ue: The actual color value.</li>
+    </ul>
+
+    <p>LCH is the polar form of Oklab. This means hue represents an angle and wraps around. The angle is in radians, which goes from negative PI to positive PI, or -3.141 to +3.141.</p>
+    
+    <p>Note that Oklab is a larger color space than RGB. This means not every Oklab color can be represented as an RGB color. You can choose whether you want to clamp or hide invalid Oklab colors. In case of hiding, invalid colors will be drawn as magenta #ff00ff. </p>
+    
+    <p>If you selected an invalid RGB color, it will be marked by this emoji: &#128721; Clicking on the emoji will clamp the color into valid range.</p>
+    
+    <p>GitHub: <a href="https://github.com/Rismosch/ris_color_picker" target="_blank" rel="noopener noreferrer">https://github.com/Rismosch/ris_color_picker</a></p>
+
 </div>
 
 <noscript>
@@ -230,7 +250,7 @@
         is_dragging_z = true;
         drag_z(e);
     });
-
+    
     document.body.addEventListener('touchmove', (e) => {
         if (is_touching_xy) {
             e.preventDefault();
